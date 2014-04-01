@@ -6,6 +6,7 @@ CardSet
 	IsSoft() bool
 	CanSplit() bool
 	IsBlackjack() bool
+	Bust() bool
 }
 
 type handImpl struct {
@@ -32,7 +33,11 @@ func (this *handImpl) CanSplit() bool {
 }
 
 func (this *handImpl) IsSoft() bool {
-	return this.Score()+this.aceCount*10 != this.score
+	return this.Score() + this.aceCount*10 != this.score
+}
+
+func (this *handImpl) Bust() bool {
+	return this.Score() > 21
 }
 
 func (this *handImpl) Pop() Card {

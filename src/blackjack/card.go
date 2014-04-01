@@ -1,6 +1,9 @@
 package blackjack
 
-import "gaming"
+import (
+	"gaming"
+	"math/rand"
+)
 
 type Value interface {
 gaming.Value
@@ -30,8 +33,14 @@ var Jack = &valueImpl{gaming.Jack, uint(10)}
 var Queen = &valueImpl{gaming.Queen, uint(10)}
 var King = &valueImpl{gaming.King, uint(10)}
 
+var values = []Value{Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King}
+
 func Values() []Value {
-	return []Value{Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King}
+	return values;
+}
+
+func RandomValue(r *rand.Rand) Value {
+	return values[r.Intn(len(values))]
 }
 
 type Card interface {
@@ -46,6 +55,10 @@ type cardImpl struct {
 
 func NewCard(suit gaming.Suit, value Value) Card {
 	return &cardImpl{suit, value}
+}
+
+func NewRandomCard(r *rand.Rand) Card {
+	return &cardImpl{suit: gaming.RandomSuit(r), value: RandomValue(r)}
 }
 
 func (this *cardImpl) Score() uint {

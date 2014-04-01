@@ -1,5 +1,7 @@
 package gaming
 
+import "math/rand"
+
 type Suit interface {
 	Name() string
 	Symbol() rune
@@ -28,9 +30,14 @@ var Spade = &suitImpl{name: "spade", symbol: 's', index: 0}
 var Club = &suitImpl{name: "club", symbol: 'c', index: 1}
 var Heart = &suitImpl{name: "heart", symbol: 'h', index: 2}
 var Diamond = &suitImpl{name: "diamond", symbol: 'd', index: 3}
+var suits = []Suit{Spade, Club, Heart, Diamond}
 
 func Suits() []Suit {
-	return []Suit{Spade, Club, Heart, Diamond}
+	return suits
+}
+
+func RandomSuit(r *rand.Rand) Suit {
+	return Suits()[r.Intn(len(suits))]
 }
 
 type Value interface {

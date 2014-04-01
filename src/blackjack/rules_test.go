@@ -12,4 +12,7 @@ func TestRules(t *testing.T) {
 	if !rules.CanDouble(uint(9)) {
 		t.Error("Can double on 9!")
 	}
+	if rules.BlackjackPayout() != NORMAL_PAYOUT {
+		t.Error("Expected normal blackjack payout")
+	}
 }

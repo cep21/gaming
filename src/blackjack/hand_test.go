@@ -55,9 +55,15 @@ func TestHand(t *testing.T) {
 	h.Push(NewCard(gaming.Spade, Ace))
 	h.Push(NewCard(gaming.Spade, Ace))
 	h.Push(NewCard(gaming.Spade, Ace))
+	if h.Bust() {
+		t.Error("Expected not to bust")
+	}
 	h.Push(NewCard(gaming.Spade, Ace))
 	if h.Score() != 22 {
 		t.Errorf("Expected score of 22, not %d\n", h.Score())
+	}
+	if !h.Bust() {
+		t.Error("Expected to bust")
 	}
 }
 
