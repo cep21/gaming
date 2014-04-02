@@ -5,7 +5,7 @@ import (
 )
 
 func TestRules(t *testing.T) {
-	rules := NewRuleset(true, true, true, []uint{9, 10, 11}, NORMAL_PAYOUT)
+	rules := NewRuleset(true, true, true, []uint{9, 10, 11}, NORMAL_PAYOUT, .5)
 	if rules.CanDouble(uint(8)) {
 		t.Error("Cannot double on 8!")
 	}

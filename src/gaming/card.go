@@ -1,6 +1,9 @@
 package gaming
 
-import "math/rand"
+import (
+	"math/rand"
+	"fmt"
+)
 
 type Suit interface {
 	Name() string
@@ -24,6 +27,10 @@ func (this *suitImpl) Symbol() rune {
 
 func (this *suitImpl) Index() uint {
 	return this.index
+}
+
+func (this *suitImpl) String() string {
+	return this.Name()
 }
 
 var Spade = &suitImpl{name: "spade", symbol: 's', index: 0}
@@ -64,19 +71,23 @@ func (this *valueImpl) Index() uint {
 	return this.index
 }
 
+func (this *valueImpl) String() string {
+	return fmt.Sprintf("%s", this.name)
+}
+
 var Ace = &valueImpl{name:"ace", symbol:'a', index: 0}
-var Two = &valueImpl{name:"ace", symbol:'2', index: 1}
-var Three = &valueImpl{name:"ace", symbol:'3', index: 2}
-var Four = &valueImpl{name:"ace", symbol:'4', index: 3}
-var Five = &valueImpl{name:"ace", symbol:'5', index: 4}
-var Six = &valueImpl{name:"ace", symbol:'6', index: 5}
-var Seven = &valueImpl{name:"ace", symbol:'7', index: 6}
-var Eight = &valueImpl{name:"ace", symbol:'8', index: 7}
-var Nine = &valueImpl{name:"ace", symbol:'9', index: 8}
-var Ten = &valueImpl{name:"ace", symbol:'t', index: 9}
-var Jack = &valueImpl{name:"ace", symbol:'j', index: 10}
-var Queen = &valueImpl{name:"ace", symbol:'q', index: 11}
-var King = &valueImpl{name:"ace", symbol:'k', index: 12}
+var Two = &valueImpl{name:"two", symbol:'2', index: 1}
+var Three = &valueImpl{name:"three", symbol:'3', index: 2}
+var Four = &valueImpl{name:"four", symbol:'4', index: 3}
+var Five = &valueImpl{name:"five", symbol:'5', index: 4}
+var Six = &valueImpl{name:"six", symbol:'6', index: 5}
+var Seven = &valueImpl{name:"seven", symbol:'7', index: 6}
+var Eight = &valueImpl{name:"eight", symbol:'8', index: 7}
+var Nine = &valueImpl{name:"nine", symbol:'9', index: 8}
+var Ten = &valueImpl{name:"ten", symbol:'t', index: 9}
+var Jack = &valueImpl{name:"jack", symbol:'j', index: 10}
+var Queen = &valueImpl{name:"queen", symbol:'q', index: 11}
+var King = &valueImpl{name:"king", symbol:'k', index: 12}
 var Joker = &valueImpl{name:"joker", symbol:'o', index: 13}
 
 func Values() []Value {

@@ -15,11 +15,11 @@ func TestDealerSoftHit(t *testing.T) {
 	hand := NewHand()
 	hand.Push(NewCard(gaming.Spade, Ace))
 	hand.Push(NewCard(gaming.Spade, Six))
-	if !strat.ShouldHit(hand, hand) {
+	if !strat.ShouldHit(hand, NewCard(gaming.Spade, Six)) {
 		t.Error("Expect to hit on soft 17")
 	}
 	hand.Push(NewCard(gaming.Spade, Two))
-	if strat.ShouldHit(hand, hand) {
+	if strat.ShouldHit(hand, NewCard(gaming.Spade, Six)) {
 		t.Error("Expect to not hit")
 	}
 }

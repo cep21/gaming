@@ -59,3 +59,9 @@ func (this *handImpl) Push(c Card) {
 func NewHand() Hand {
 	return &handImpl{}
 }
+
+func NewHandWithCard(c Card) Hand {
+	h := NewHand()
+	h.Push(c)
+	return h
+}

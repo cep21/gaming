@@ -3,6 +3,7 @@ package blackjack
 import (
 	"gaming"
 	"math/rand"
+	"fmt"
 )
 
 type Value interface {
@@ -17,6 +18,10 @@ type valueImpl struct {
 
 func (this *valueImpl) Score() uint {
 	return this.score
+}
+
+func (this *valueImpl) String() string {
+	return fmt.Sprintf("%s", this.Value)
 }
 
 var Ace = &valueImpl{gaming.Ace, uint(1)}
@@ -55,6 +60,10 @@ type cardImpl struct {
 
 func NewCard(suit gaming.Suit, value Value) Card {
 	return &cardImpl{suit, value}
+}
+
+func (this *cardImpl) String() string{
+	return fmt.Sprintf("%s %s", this.value, this.suit)
 }
 
 func NewRandomCard(r *rand.Rand) Card {
