@@ -19,7 +19,7 @@ func (this *valueImpl) Score() uint {
 	return this.score
 }
 
-var Ace = &valueImpl{gaming.Ace, uint(11)}
+var Ace = &valueImpl{gaming.Ace, uint(1)}
 var Two = &valueImpl{gaming.Two, uint(2)}
 var Three = &valueImpl{gaming.Three, uint(3)}
 var Four = &valueImpl{gaming.Four, uint(4)}

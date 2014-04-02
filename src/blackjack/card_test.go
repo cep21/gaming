@@ -7,8 +7,8 @@ import (
 )
 
 func TestSuits(t *testing.T) {
-	if Ace.Score() != 11 {
-		t.Error("Ace should have a score of 11")
+	if Ace.Score() != 1 {
+		t.Error("Ace should have a score of 1")
 	}
 
 	if Ace.Name() != "ace" {

@@ -11,17 +11,16 @@ CardSet
 
 type handImpl struct {
 	cardSetImpl
-	score    uint
 	aceCount uint
+	score uint
 }
 
 func (this *handImpl) Score() uint {
-	acecount, score := this.aceCount, this.score
-	for ; acecount > 0 && score > 21; {
-		acecount--
-		score -= 10
+	if this.IsSoft() {
+		return this.score + 10;
+	} else {
+		return this.score;
 	}
-	return score
 }
 
 func (this *handImpl) IsBlackjack() bool {
@@ -33,7 +32,7 @@ func (this *handImpl) CanSplit() bool {
 }
 
 func (this *handImpl) IsSoft() bool {
-	return this.Score() + this.aceCount*10 != this.score
+	return this.aceCount > 0 && this.score < 12;
 }
 
 func (this *handImpl) Bust() bool {
@@ -44,7 +43,7 @@ func (this *handImpl) Pop() Card {
 	c := this.cardSetImpl.Pop()
 	this.score -= c.Score()
 	if c.Value() == Ace {
-		this.aceCount--
+		this.aceCount--;
 	}
 	return c
 }
@@ -53,7 +52,7 @@ func (this *handImpl) Push(c Card) {
 	this.cardSetImpl.Push(c)
 	this.score += c.Score()
 	if c.Value() == Ace {
-		this.aceCount++
+		this.aceCount++;
 	}
 }
 

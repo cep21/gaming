@@ -25,6 +25,39 @@ func TestSplit(t *testing.T) {
 	}
 }
 
+func TestSoftAgain(t *testing.T) {
+	// 5 4 => 9        (Hard)
+	// 5 4 A => 20     (Soft)
+	// 5 4 A A => 21   (Soft)
+	// 5 4 A A 2 => 13 (Hard)
+	// 5 4 A A 2 8 => 21 (Hard)
+	// 5 4 A A 2 8 A => 22 (Hard)
+	type handScore struct {
+		value Value
+		expectedScore uint
+		isSoft bool
+	}
+	v := []handScore {
+		handScore{Five, 5, false},
+		handScore{Four, 9, false},
+		handScore{Ace, 20, true},
+		handScore{Ace, 21, true},
+		handScore{Two, 13, false},
+		handScore{Eight, 21, false},
+		handScore{Ace, 22, false},
+	}
+	h := NewHand()
+	for _, s := range v {
+		h.Push(NewCard(gaming.Spade, s.value))
+		if h.Score() != s.expectedScore {
+			t.Error("Did not get expected value")
+		}
+		if h.IsSoft() != s.isSoft {
+			t.Error("Softness not as expected")
+		}
+	}
+}
+
 func TestHand(t *testing.T) {
 	h := NewHand()
 	h.Push(NewCard(gaming.Spade, Ace))
