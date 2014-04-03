@@ -31,6 +31,5 @@ func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealer
 			// Push, zero
 		}
 	}
-//	fmt.Printf("%f %f\n", sum_result, float64(number_of_iterations))
-	return sum_result / float64(number_of_iterations)
+	return sum_result/float64(number_of_iterations)
 }
