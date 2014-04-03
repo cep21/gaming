@@ -11,7 +11,7 @@ type GameAction interface {
 }
 
 type gameActionImpl struct {
-	name string
+	name   string
 	symbol rune
 }
 
