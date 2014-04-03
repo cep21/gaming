@@ -77,13 +77,13 @@ func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy ShouldHitStra
 // Hit on a hard score strategy
 type hitOnAScoreStrategy struct {
 	hardScoreToHit uint
+	softScoreToHit uint
 }
 
 func (this* hitOnAScoreStrategy) ShouldHit(currentHand Hand, _ Card) bool {
-	return currentHand.IsSoft() || currentHand.Score() == this.hardScoreToHit
+	return (currentHand.IsSoft() && currentHand.Score() <= this.softScoreToHit) || (!currentHand.IsSoft() && currentHand.Score() <= this.hardScoreToHit)
 }
 
-func NewHitOnAScoreStrategy(score_to_hit uint) ShouldHitStrategy {
-	return &hitOnAScoreStrategy{score_to_hit}
+func NewHitOnAScoreStrategy(soft_score_to_hit uint, hard_score_to_hit uint) ShouldHitStrategy {
+	return &hitOnAScoreStrategy{hard_score_to_hit, soft_score_to_hit}
 }
-
