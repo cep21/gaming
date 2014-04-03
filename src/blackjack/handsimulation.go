@@ -5,26 +5,32 @@
  */
 package blackjack
 
-func SimulateSingleHand(cardsetFactory CardsetFactory, playerHand Hand, dealerCard Card, dealerStrategy ShouldHitStrategy, bettingStrategy BettingStrategy, playerStrategy ShouldHitStrategy, number_of_iterations uint) {
-	sum_result := 0
+func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealerCard Card, dealerStrategy ShouldHitStrategy, bettingStrategy BettingStrategy, playerStrategy ShouldHitStrategy, number_of_iterations uint) float64 {
+	sum_result := 0.0
 
 	for i := uint(0); i < number_of_iterations; i++ {
-		deck := cardsetFactory.CreateCardSet()
+		playerHand := originalPlayerHand.Clone()
+		deck := shoeFactory.CreateShoe()
 		units_to_bet := bettingStrategy.GetUnitsToBet()
 		PlayHandOnStrategy(playerHand, dealerCard, playerStrategy, deck)
 		if playerHand.Bust() {
 			sum_result -= units_to_bet
+			continue
 		}
 
 		dealer_hand := NewHandWithCard(dealerCard)
 		dealer_hand.Push(deck.Pop())
 		PlayHandOnStrategy(dealer_hand, /*Ignored*/dealerCard, dealerStrategy, deck)
 		if dealer_hand.Bust() || playerHand.Score() > dealer_hand.Score() {
-			sum_results += units_to_bet
+			sum_result += units_to_bet
+			//fmt.Println("Win")
 		} else if playerHand.Score() < dealer_hand.Score() {
-			sum_results -= units_to_bet
+			//fmt.Println("Lose")
+			sum_result -= units_to_bet
 		} else {
-			// Push
+			// Push, zero
 		}
 	}
+//	fmt.Printf("%f %f\n", sum_result, float64(number_of_iterations))
+	return sum_result / float64(number_of_iterations)
 }

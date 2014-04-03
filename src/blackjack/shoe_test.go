@@ -1,3 +1,8 @@
+/**
+ * Date: 4/3/14
+ * Time: 1:24 PM
+ * @author jack 
+ */
 package blackjack
 
 import (
@@ -7,17 +12,14 @@ import (
 )
 
 func TestDeck(t *testing.T) {
-	if SingleDeck().CardsLeft() != 52 {
+	if Decks(1).CardsLeft() != 52 {
 		t.Errorf("Expect 52 values")
 	}
 }
 
 func TestInfiniteDeck(t *testing.T) {
 	r := rand.New(rand.NewSource(2))
-	d := NewInfiniteDeck(r)
-	if d.IsEmpty() {
-		t.Error("Infinite decks are never empty")
-	}
+	d := NewInfiniteShoe(r)
 	if d.CardsLeft() < 10000 {
 		t.Error("Deck should be infinite")
 	}
@@ -29,15 +31,14 @@ func TestInfiniteDeck(t *testing.T) {
 		d.Pop()
 	}
 	c := d.Pop()
-	d.Push(c)
-	if c.Value() != d.Pop().Value() {
-		t.Error("Pushing back on an infinite deck does not work")
+	if c == nil {
+		t.Error("Do not expect nil cards from an infinite shoe")
 	}
 }
 
 func TestRandomPickDeck(t *testing.T) {
 	r := rand.New(rand.NewSource(2))
-	d := NewRandomPickDeck(r, gaming.Spade, 1)
+	d := NewRandomPickShoe(r, gaming.Spade, 1)
 	cards_left := uint(52);
 	num_eights := 0;
 	for i:=0;i<52;i++ {
