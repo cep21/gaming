@@ -90,7 +90,7 @@ func TestHitOnSoft18(t *testing.T) {
 
 
 func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBetterToHit bool) {
-	var hit_strategy ShouldHitStrategy
+	var hit_strategy PlayStrategy
 	if player_hand.IsSoft() {
 		hit_strategy = NewHitOnAScoreStrategy(player_hand.Score(), 16)
 	} else {

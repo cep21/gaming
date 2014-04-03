@@ -5,7 +5,7 @@
  */
 package blackjack
 
-func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealerCard Card, dealerStrategy ShouldHitStrategy, bettingStrategy BettingStrategy, playerStrategy ShouldHitStrategy, number_of_iterations uint) float64 {
+func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealerCard Card, dealerStrategy PlayStrategy, bettingStrategy BettingStrategy, playerStrategy PlayStrategy, number_of_iterations uint) float64 {
 	sum_result := 0.0
 
 	for i := uint(0); i < number_of_iterations; i++ {
