@@ -37,3 +37,16 @@ func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealer
 	}
 	return sum_result/float64(number_of_iterations), nil
 }
+
+//func SimulateSingleHand2(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy,
+//	playerStrategy PlayStrategy, bettingStrategy BettingStrategy,  number_of_iterations uint) (float64, error) {
+//	sum_result := 0.0
+//	bankroll := NewBankroll(0)
+//	for i := uint(0); i < number_of_iterations; i++ {
+//		//units_to_bet := bettingStrategy.GetUnitsToBet()
+//		//shoe := shoeFactory.CreateShoe()
+//		//bankroll.ChangeBankroll(-units_to_bet)
+//		//hands := dealer.DealHands(shoe, 2)
+//	}
+//	return sum_result/float64(number_of_iterations), nil
+//}
