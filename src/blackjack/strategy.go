@@ -32,6 +32,21 @@ var STAND = &gameActionImpl{"stand", 'S'}
 var DOUBLE = &gameActionImpl{"double", 'D'}
 var SPLIT = &gameActionImpl{"split", 'P'}
 
+type PlayResult interface {
+	Name() string
+	BankChange() float64
+}
+
+type playResultImpl struct {
+	name string
+	bankChange float64
+}
+
+var STAND = &playResultImpl{"stand", 0.0}
+var DOUBLE = &playResultImpl{"double", -1}
+var SPLIT = &playResultImpl{"split", -1}
+var SURRENDER = &playResultImpl{"surrender", 0.5}
+
 type PlayStrategy interface {
 	TakeAction(currentHand Hand, shownCard Card) GameAction
 }
@@ -102,7 +117,7 @@ func NewNeverBustStrategy(should_hit_soft bool) PlayStrategy {
 	return &neverBustStrategy{should_hit_soft}
 }
 
-func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy PlayStrategy, deck Shoe) {
+func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy PlayStrategy, deck Shoe) PlayResult {
 	for ; deck.CardsLeft() != 0; {
 		if currentHand.Bust() {
 			return

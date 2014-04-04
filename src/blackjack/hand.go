@@ -10,6 +10,8 @@ type Hand interface {
 	Push(c Card)
 	IsBlackjack() bool
 	IsSplitHand() bool
+	FirstCard() Card
+
 	Bust() bool
 	Clone() Hand
 }
@@ -23,6 +25,15 @@ type handImpl struct {
 
 func (this *handImpl) IsSplitHand() bool {
 	return this.isSplitHand
+}
+
+func (this *handImpl) FirstCard() Card {
+	if len(this.cards) == 0 {
+		panic("Please check the first card first")
+		//return nil
+	} else {
+		return this.cards[0]
+	}
 }
 
 func (this *handImpl) Score() uint {

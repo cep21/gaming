@@ -6,7 +6,7 @@ import (
 )
 
 func TestRules(t *testing.T) {
-	rules := NewRuleset(true, true, true, []uint{9, 10, 11}, []uint{9, 10, 11}, NORMAL_PAYOUT, .5)
+	rules := NewRulesetFactory().HardDoubleValues([]uint{9,10,11}).Build()
 	h := NewHand()
 	h.Push(NewCard(gaming.Spade, Four))
 	h.Push(NewCard(gaming.Spade, Four))
