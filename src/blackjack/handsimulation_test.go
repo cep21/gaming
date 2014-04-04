@@ -97,8 +97,8 @@ func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBet
 	infinite_deck := NewClonedDeckFactory(NewInfiniteShoe(r), r)
 	dealerCard := NewCard(gaming.Spade, dealerValue)
 	rounds_to_simulate := uint(10000)
-	result_for_hitting := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, hit_strategy, rounds_to_simulate)
-	result_for_standing := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, never_bust_strategy, rounds_to_simulate)
+	result_for_hitting, _ := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, hit_strategy, rounds_to_simulate)
+	result_for_standing, _ := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, never_bust_strategy, rounds_to_simulate)
 	delta := math.Abs(result_for_hitting - result_for_standing)
 	if expectedBetterToHit {
 		if result_for_standing > result_for_hitting {

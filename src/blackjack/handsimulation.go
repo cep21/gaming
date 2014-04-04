@@ -5,7 +5,7 @@
  */
 package blackjack
 
-func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealerCard Card, dealerStrategy PlayStrategy, bettingStrategy BettingStrategy, playerStrategy PlayStrategy, number_of_iterations uint) float64 {
+func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealerCard Card, dealerStrategy PlayStrategy, bettingStrategy BettingStrategy, playerStrategy PlayStrategy, number_of_iterations uint) (float64, error) {
 	sum_result := 0.0
 
 	for i := uint(0); i < number_of_iterations; i++ {
@@ -19,7 +19,11 @@ func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealer
 		}
 
 		dealer_hand := NewHand(dealerCard)
-		dealer_hand.Push(deck.Pop())
+		card, err := deck.Pop()
+		if err != nil {
+			return 0, err
+		}
+		dealer_hand.Push(card)
 		PlayHandOnStrategy(dealer_hand, /*Ignored*/dealerCard, dealerStrategy, deck)
 		if dealer_hand.Bust() || playerHand.Score() > dealer_hand.Score() {
 			sum_result += units_to_bet
@@ -31,5 +35,5 @@ func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealer
 			// Push, zero
 		}
 	}
-	return sum_result/float64(number_of_iterations)
+	return sum_result/float64(number_of_iterations), nil
 }

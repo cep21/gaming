@@ -11,6 +11,7 @@ type Hand interface {
 	IsBlackjack() bool
 	IsSplitHand() bool
 	FirstCard() Card
+	Cards() []Card
 
 	Bust() bool
 	Clone() Hand
@@ -25,6 +26,10 @@ type handImpl struct {
 
 func (this *handImpl) IsSplitHand() bool {
 	return this.isSplitHand
+}
+
+func (this *handImpl) Cards() []Card {
+	return this.cards
 }
 
 func (this *handImpl) FirstCard() Card {

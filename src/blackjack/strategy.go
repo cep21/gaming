@@ -113,7 +113,10 @@ func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy PlayStrategy,
 		if res == STAND {
 			return
 		} else if res == HIT {
-			c := deck.Pop()
+			c, err := deck.Pop()
+			if err != nil {
+				return // err
+			}
 			currentHand.Push(c)
 		} else {
 			panic("I don't have SPLIT or DOUBLE yet")

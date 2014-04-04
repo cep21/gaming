@@ -51,6 +51,7 @@ func RandomValue(r *rand.Rand) Value {
 type Card interface {
 gaming.Card
 	Score() uint
+	BlackjackValue() Value
 }
 
 type cardImpl struct {
@@ -79,5 +80,9 @@ func (this *cardImpl) Suit() gaming.Suit {
 }
 
 func (this *cardImpl) Value() gaming.Value {
+	return this.value
+}
+
+func (this *cardImpl) BlackjackValue() Value {
 	return this.value
 }

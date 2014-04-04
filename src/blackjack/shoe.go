@@ -9,12 +9,16 @@ import (
 	"gaming"
 	"math/rand"
 	"math"
+	"errors"
 )
 
+var ERR_CARD_NOT_IN_SHOE = errors.New("Unable to find card in the shoe")
+var ERR_SHOE_EMPTY = errors.New("Tried to take a card from an empty shoe")
+
 type Shoe interface {
-	Pop() Card
+	Pop() (Card, error)
 	CardsLeft() uint
-	TakeValueFromShoe(valueToTake Value) Card
+	TakeValueFromShoe(valueToTake Value) (Card, error)
 	StartingCardCount() uint
 	Clone() Shoe
 	Shuffle(r *rand.Rand) Shoe
@@ -29,10 +33,13 @@ type setShoeImpl struct {
 	startingCardCount uint
 }
 
-func (this *setShoeImpl) Pop() Card {
+func (this *setShoeImpl) Pop() (Card, error) {
+	if len(this.cards) == 0 {
+		return nil, ERR_SHOE_EMPTY
+	}
 	c := this.cards[0]
 	this.cards = this.cards[1:]
-	return c
+	return c, nil
 }
 
 func (this *setShoeImpl) CardsLeft() uint {
@@ -57,15 +64,15 @@ func (this *setShoeImpl) Shuffle(r *rand.Rand) Shoe {
 	return this
 }
 
-func (this *setShoeImpl) TakeValueFromShoe(valueToTake Value) Card {
+func (this *setShoeImpl) TakeValueFromShoe(valueToTake Value) (Card, error) {
 	for i, c:= range this.cards {
 		if c.Value() == valueToTake {
 			ret := c
 			this.cards = append(this.cards[:i], this.cards[i+1:]...)
-			return ret
+			return ret, nil
 		}
 	}
-	return nil
+	return nil, ERR_CARD_NOT_IN_SHOE
 }
 
 func NewShoe(cards ...Card) Shoe {
@@ -89,8 +96,8 @@ type infiniteShoe struct {
 	r *rand.Rand
 }
 
-func (this *infiniteShoe) Pop() Card {
-	return NewRandomCard(this.r)
+func (this *infiniteShoe) Pop() (Card, error) {
+	return NewRandomCard(this.r), nil
 }
 
 func (this *infiniteShoe) CardsLeft() uint {
@@ -110,8 +117,8 @@ func (this *infiniteShoe) Shuffle(r *rand.Rand) Shoe {
 }
 
 
-func (this *infiniteShoe) TakeValueFromShoe(valueToTake Value) Card {
-	return NewCard(gaming.RandomSuit(this.r), valueToTake)
+func (this *infiniteShoe) TakeValueFromShoe(valueToTake Value) (Card, error) {
+	return NewCard(gaming.RandomSuit(this.r), valueToTake), nil
 }
 
 func NewInfiniteShoe(rand *rand.Rand) Shoe {
@@ -145,20 +152,20 @@ func NewRandomPickShoe(r *rand.Rand, number_of_decks uint) Shoe {
 	}
 }
 
-func (this *randomPickShoe) TakeValueFromShoe(valueToTake Value) Card {
+func (this *randomPickShoe) TakeValueFromShoe(valueToTake Value) (Card, error) {
 	if this.countPerValue[valueToTake.Index()] == 0 {
-		return nil
+		return nil, ERR_CARD_NOT_IN_SHOE
 	}
 	suit := this.suitsPerValue[valueToTake.Index()][this.countPerValue[valueToTake.Index()] - 1]
 	this.countPerValue[valueToTake.Index()]--
 	this.currentSize--
-	return NewCard(suit, valueToTake)
+	return NewCard(suit, valueToTake), nil
 }
 
-func (this *randomPickShoe) Pop() Card {
+func (this *randomPickShoe) Pop() (Card, error) {
 	old_number_of_cards_left := this.currentSize
 	if old_number_of_cards_left == 0 {
-		return nil
+		return nil, ERR_SHOE_EMPTY
 	}
 
 	selected_index := uint(this.r.Intn(int(old_number_of_cards_left)))
@@ -199,7 +206,6 @@ func (this *randomPickShoe) Clone() Shoe {
 func (this *randomPickShoe) Shuffle(r *rand.Rand) Shoe {
 	return this
 }
-
 
 type ShoeFactory interface {
 	CreateShoe() Shoe

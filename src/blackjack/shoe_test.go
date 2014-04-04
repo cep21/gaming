@@ -22,19 +22,26 @@ func TestInfiniteDeck(t *testing.T) {
 	if d.CardsLeft() < 10000 {
 		t.Error("Deck should be infinite")
 	}
+
+	c1, err1 := d.Pop()
+	c2, err2 := d.Pop()
+	if err1 != nil || err2 != nil {
+		t.Error("Expected a nil error")
+	}
 	// Consistent because seed is a constant
-	if d.Pop().Value() == d.Pop().Value() {
+	if c1.Value() == c2.Value() {
 		t.Error("Expected different values when I pop'd")
 	}
 	for i := 0; i < 1000; i++ {
 		d.Pop()
 	}
-	c := d.Pop()
-	if c == nil {
-		t.Error("Do not expect nil cards from an infinite shoe")
+	_, err := d.Pop()
+	if err != nil {
+		t.Error("Do not expect errors from an infinite shoe")
 	}
 	for i := 0;i<1000;i++ {
-		if d.TakeValueFromShoe(Ace) == nil {
+		c, err := d.TakeValueFromShoe(Ace)
+		if c == nil || err != nil {
 			t.Error("Did not expect to run out of aces from an infinite shoe")
 		}
 	}
@@ -53,8 +60,8 @@ func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
 	}
 	counts_per_suit := []uint{0, 0, 0, 0}
 	for i := 0;i<4;i++ {
-		c := d.TakeValueFromShoe(Ace)
-		if c == nil {
+		c, err := d.TakeValueFromShoe(Ace)
+		if c == nil || err != nil {
 			t.Error("Did not expect to run out of 4 aces")
 		} else if c.Value() != Ace {
 			t.Error("Did not draw an ace")
@@ -66,15 +73,18 @@ func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
 			t.Error("Did not draw the right amount of a suit from a deck")
 		}
 	}
-
-	if d.TakeValueFromShoe(Ace) != nil {
+	c, err := d.TakeValueFromShoe(Ace)
+	if c != nil || err == nil {
 		t.Error("We should be out of aces by now!")
 	}
 
 	cards_left := uint(52 - 4);
 	num_eights := 0;
 	for i:=0;i<52-4;i++ {
-		c := d.Pop()
+		c, err := d.Pop()
+		if err != nil {
+			t.Error("I don't expect an error poping from the deck")
+		}
 		if c.Value() == Eight {
 			num_eights++
 		}
