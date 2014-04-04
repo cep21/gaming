@@ -9,6 +9,7 @@ type Hand interface {
 	Size() uint
 	Push(c Card)
 	IsBlackjack() bool
+	IsSplitHand() bool
 	Bust() bool
 	Clone() Hand
 }
@@ -17,6 +18,11 @@ type handImpl struct {
 	cards []Card
 	aceCount uint
 	score uint
+	isSplitHand bool
+}
+
+func (this *handImpl) IsSplitHand() bool {
+	return this.isSplitHand
 }
 
 func (this *handImpl) Score() uint {
@@ -46,7 +52,7 @@ func (this *handImpl) Size() uint {
 }
 
 func (this *handImpl) Clone() Hand {
-	return &handImpl{this.cards, this.aceCount, this.score}
+	return &handImpl{this.cards, this.aceCount, this.score, this.isSplitHand}
 }
 
 func (this *handImpl) IsBlackjack() bool {
@@ -73,12 +79,10 @@ func (this *handImpl) Push(c Card) {
 	}
 }
 
-func NewHand() Hand {
-	return &handImpl{}
-}
-
-func NewHandWithCard(c Card) Hand {
-	h := NewHand()
-	h.Push(c)
+func NewHand(cards ...Card) Hand {
+	h := &handImpl{}
+	for _, c := range cards {
+		h.Push(c)
+	}
 	return h
 }

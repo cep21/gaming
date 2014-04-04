@@ -18,7 +18,7 @@ func SimulateSingleHand(shoeFactory ShoeFactory, originalPlayerHand Hand, dealer
 			continue
 		}
 
-		dealer_hand := NewHandWithCard(dealerCard)
+		dealer_hand := NewHand(dealerCard)
 		dealer_hand.Push(deck.Pop())
 		PlayHandOnStrategy(dealer_hand, /*Ignored*/dealerCard, dealerStrategy, deck)
 		if dealer_hand.Bust() || playerHand.Score() > dealer_hand.Score() {
