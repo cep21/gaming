@@ -153,7 +153,7 @@ type rulesetFactoryImpl struct {
 
 var DEFAULT_DOUBLE_AFTER_SPLIT = true
 var DEFAULT_RESPLIT_ACES = true
-var DEFAULT_MAX_RESPLITS = 4
+var DEFAULT_MAX_RESPLITS = uint(4)
 var DEFAULT_HIT_SOFT_17 = true
 var DEFAULT_HARD_DOUBLE_VALUES = AllValues()
 var DEFAULT_SOFT_DOUBLE_VALUES = AllValues()

@@ -8,13 +8,12 @@ package blackjack
 import (
 	"testing"
 	"math/rand"
-	"gaming"
 )
 
 func TestDeck(t *testing.T) {
-	if Decks(1).CardsLeft() != 52 {
-		t.Errorf("Expect 52 values")
-	}
+	d := Decks(1)
+	singleDeckVerificiation(t, d.Clone(), 1)
+	singleDeckVerificiation(t, d, 1)
 }
 
 func TestInfiniteDeck(t *testing.T) {
@@ -34,14 +33,47 @@ func TestInfiniteDeck(t *testing.T) {
 	if c == nil {
 		t.Error("Do not expect nil cards from an infinite shoe")
 	}
+	for i := 0;i<1000;i++ {
+		if d.TakeValueFromShoe(Ace) == nil {
+			t.Error("Did not expect to run out of aces from an infinite shoe")
+		}
+	}
 }
 
 func TestRandomPickDeck(t *testing.T) {
 	r := rand.New(rand.NewSource(2))
-	d := NewRandomPickShoe(r, gaming.Spade, 1)
-	cards_left := uint(52);
+	d := NewRandomPickShoe(r, 1)
+	singleDeckVerificiation(t, d.Clone().Shuffle(r), 1)
+	singleDeckVerificiation(t, d, 1)
+}
+
+func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
+	if d.CardsLeft() != 52 {
+		t.Errorf("Expect 52 values")
+	}
+	counts_per_suit := []uint{0, 0, 0, 0}
+	for i := 0;i<4;i++ {
+		c := d.TakeValueFromShoe(Ace)
+		if c == nil {
+			t.Error("Did not expect to run out of 4 aces")
+		} else if c.Value() != Ace {
+			t.Error("Did not draw an ace")
+		}
+		counts_per_suit[c.Suit().Index()]++
+	}
+	for _, v := range counts_per_suit {
+		if v != number_of_decks {
+			t.Error("Did not draw the right amount of a suit from a deck")
+		}
+	}
+
+	if d.TakeValueFromShoe(Ace) != nil {
+		t.Error("We should be out of aces by now!")
+	}
+
+	cards_left := uint(52 - 4);
 	num_eights := 0;
-	for i:=0;i<52;i++ {
+	for i:=0;i<52-4;i++ {
 		c := d.Pop()
 		if c.Value() == Eight {
 			num_eights++
@@ -54,5 +86,4 @@ func TestRandomPickDeck(t *testing.T) {
 	if num_eights != 4 {
 		t.Error("Expected 4 eights")
 	}
-
 }

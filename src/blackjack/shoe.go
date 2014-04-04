@@ -14,6 +14,7 @@ import (
 type Shoe interface {
 	Pop() Card
 	CardsLeft() uint
+	TakeValueFromShoe(valueToTake Value) Card
 	StartingCardCount() uint
 	Clone() Shoe
 	Shuffle(r *rand.Rand) Shoe
@@ -54,6 +55,17 @@ func (this *setShoeImpl) Shuffle(r *rand.Rand) Shoe {
 		this.cards[i], this.cards[j] = this.cards[j], this.cards[i]
 	}
 	return this
+}
+
+func (this *setShoeImpl) TakeValueFromShoe(valueToTake Value) Card {
+	for i, c:= range this.cards {
+		if c.Value() == valueToTake {
+			ret := c
+			this.cards = append(this.cards[:i], this.cards[i+1:]...)
+			return ret
+		}
+	}
+	return nil
 }
 
 func NewShoe(cards ...Card) Shoe {
@@ -97,24 +109,50 @@ func (this *infiniteShoe) Shuffle(r *rand.Rand) Shoe {
 	return this
 }
 
+
+func (this *infiniteShoe) TakeValueFromShoe(valueToTake Value) Card {
+	return NewCard(gaming.RandomSuit(this.r), valueToTake)
+}
+
 func NewInfiniteShoe(rand *rand.Rand) Shoe {
 	return &infiniteShoe{r:rand}
 }
 
 type randomPickShoe struct {
-	defaultSuit gaming.Suit
 	r *rand.Rand
 	countPerValue []uint
+	suitsPerValue [][]gaming.Suit
 	startingSize uint
 	currentSize uint
 }
 
-func NewRandomPickShoe(r *rand.Rand, defaultSuit gaming.Suit, number_of_decks uint) Shoe {
+func NewRandomPickShoe(r *rand.Rand, number_of_decks uint) Shoe {
 	countPerValue := []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	suitsPerValue := make([][]gaming.Suit, 13)
+	all_suits := gaming.Suits()
 	for i:=0;i<len(countPerValue);i++ {
 		countPerValue[i] = number_of_decks * 4
+		for j:=uint(0);j<4*number_of_decks;j++ {
+			suitsPerValue[i] = append(suitsPerValue[i], all_suits[j%4])
+		}
 	}
-	return &randomPickShoe{defaultSuit, r, countPerValue, 4 * number_of_decks * 13, 4 * number_of_decks * 13}
+	return &randomPickShoe{
+		r: r,
+		countPerValue: countPerValue,
+		suitsPerValue: suitsPerValue,
+		startingSize: 4 * number_of_decks * 13,
+		currentSize: 4 * number_of_decks * 13,
+	}
+}
+
+func (this *randomPickShoe) TakeValueFromShoe(valueToTake Value) Card {
+	if this.countPerValue[valueToTake.Index()] == 0 {
+		return nil
+	}
+	suit := this.suitsPerValue[valueToTake.Index()][this.countPerValue[valueToTake.Index()] - 1]
+	this.countPerValue[valueToTake.Index()]--
+	this.currentSize--
+	return NewCard(suit, valueToTake)
 }
 
 func (this *randomPickShoe) Pop() Card {
@@ -122,13 +160,11 @@ func (this *randomPickShoe) Pop() Card {
 	if old_number_of_cards_left == 0 {
 		return nil
 	}
-	this.currentSize--
 
 	selected_index := uint(this.r.Intn(int(old_number_of_cards_left)))
 	for card_val := 0; card_val < len(this.countPerValue); card_val++ {
 		if selected_index < this.countPerValue[card_val]  {
-			this.countPerValue[card_val]--;
-			return NewCard(this.defaultSuit, Values()[card_val])
+			return this.TakeValueFromShoe(Values()[card_val])
 		} else {
 			selected_index -= this.countPerValue[card_val]
 		}
@@ -146,10 +182,18 @@ func (this *randomPickShoe) StartingCardCount() uint {
 
 func (this *randomPickShoe) Clone() Shoe {
 	countPerValue := []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	suitsPerValue := make([][]gaming.Suit, 13)
 	for i:=0;i<len(countPerValue);i++ {
 		countPerValue[i] = this.countPerValue[i]
+		suitsPerValue[i] = append(suitsPerValue[i], this.suitsPerValue[i]...)
 	}
-	return &randomPickShoe{this.defaultSuit, this.r, countPerValue, this.startingSize, this.currentSize}
+	return &randomPickShoe{
+		r: this.r,
+		countPerValue: countPerValue,
+		suitsPerValue: suitsPerValue,
+		startingSize: this.startingSize,
+		currentSize: this.currentSize,
+	}
 }
 
 func (this *randomPickShoe) Shuffle(r *rand.Rand) Shoe {
