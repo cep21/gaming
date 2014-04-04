@@ -8,9 +8,7 @@ import (
 )
 
 func TestHitOn12(t *testing.T) {
-	player_hand := NewHand()
-	player_hand.Push(NewCard(gaming.Spade, Ten))
-	player_hand.Push(NewCard(gaming.Spade, Two))
+	player_hand := NewHand(NewCard(gaming.Spade, Ten), NewCard(gaming.Spade, Two))
 
 	go simulateHand(t, Two, player_hand,    true)
 	go simulateHand(t, Three, player_hand,  true)
@@ -28,9 +26,7 @@ func TestHitOn12(t *testing.T) {
 }
 
 func TestHitOn13(t *testing.T) {
-	player_hand := NewHand()
-	player_hand.Push(NewCard(gaming.Spade, Ten))
-	player_hand.Push(NewCard(gaming.Spade, Three))
+	player_hand := NewHand(NewCard(gaming.Spade, Ten), NewCard(gaming.Spade, Three))
 
 	go simulateHand(t, Two, player_hand,    false)
 	go simulateHand(t, Three, player_hand,  false)
@@ -48,9 +44,7 @@ func TestHitOn13(t *testing.T) {
 }
 
 func TestHitOn16(t *testing.T) {
-	player_hand := NewHand()
-	player_hand.Push(NewCard(gaming.Spade, Ten))
-	player_hand.Push(NewCard(gaming.Spade, Six))
+	player_hand := NewHand(NewCard(gaming.Spade, Ten), NewCard(gaming.Spade, Six))
 
 	go simulateHand(t, Two, player_hand,    false)
 	go simulateHand(t, Three, player_hand,  false)
@@ -68,9 +62,7 @@ func TestHitOn16(t *testing.T) {
 }
 
 func TestHitOnSoft18(t *testing.T) {
-	player_hand := NewHand()
-	player_hand.Push(NewCard(gaming.Spade, Ace))
-	player_hand.Push(NewCard(gaming.Spade, Seven))
+	player_hand := NewHand(NewCard(gaming.Spade, Ace), NewCard(gaming.Spade, Seven))
 
 	go simulateHand(t, Two, player_hand,    false)
 	go simulateHand(t, Three, player_hand,  false)
