@@ -188,10 +188,10 @@ func (this *randomPickShoe) StartingCardCount() uint {
 }
 
 func (this *randomPickShoe) Clone() Shoe {
-	countPerValue := []uint{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	countPerValue := []uint{}
+	countPerValue = append(countPerValue, this.countPerValue...)
 	suitsPerValue := make([][]gaming.Suit, 13)
 	for i:=0;i<len(countPerValue);i++ {
-		countPerValue[i] = this.countPerValue[i]
 		suitsPerValue[i] = append(suitsPerValue[i], this.suitsPerValue[i]...)
 	}
 	return &randomPickShoe{

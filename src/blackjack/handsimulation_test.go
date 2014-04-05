@@ -91,14 +91,21 @@ func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBet
 
 	never_bust_strategy := NewNeverBustStrategy(false)
 	dealer_strategy := NewDealerStrategy(true)
-	// Seed 3 happens to work with only 10,000 simulated rounds
-	r := rand.New(rand.NewSource(3))
+	// Seed 4 happens to work with only 12,000 simulated rounds
+	r := rand.New(rand.NewSource(4))
 	betting_strategy := NewConsistentBettingStrategy(1)
-	infinite_deck := NewClonedDeckFactory(NewInfiniteShoe(r), r)
-	dealerCard := NewCard(gaming.Spade, dealerValue)
-	rounds_to_simulate := uint(10000)
-	result_for_hitting, _ := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, hit_strategy, rounds_to_simulate)
-	result_for_standing, _ := SimulateSingleHand(infinite_deck, player_hand, dealerCard, dealer_strategy, betting_strategy, never_bust_strategy, rounds_to_simulate)
+	shoe_factory := NewClonedDeckFactory(NewInfiniteShoe(r), r)
+	rules := NewRulesetFactory().Build()
+	rounds_to_simulate := uint(12000)
+	dealer := NewForceDealerPlayerHands(player_hand, dealerValue)
+	result_for_hitting, err := SimulateSingleHand2(shoe_factory, dealer, dealer_strategy, hit_strategy, betting_strategy, rounds_to_simulate, rules)
+	if err != nil {
+		t.Fatal("Got an error!")
+	}
+	result_for_standing, err := SimulateSingleHand2(shoe_factory, dealer, dealer_strategy, never_bust_strategy, betting_strategy, rounds_to_simulate, rules)
+	if err != nil {
+		t.Fatal("Got an error!")
+	}
 	delta := math.Abs(result_for_hitting - result_for_standing)
 	if expectedBetterToHit {
 		if result_for_standing > result_for_hitting {
