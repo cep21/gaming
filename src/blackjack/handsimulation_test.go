@@ -98,11 +98,11 @@ func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBet
 	rules := NewRulesetFactory().Build()
 	rounds_to_simulate := uint(12000)
 	dealer := NewForceDealerPlayerHands(player_hand, dealerValue)
-	result_for_hitting, err := SimulateSingleHand2(shoe_factory, dealer, dealer_strategy, hit_strategy, betting_strategy, rounds_to_simulate, rules)
+	result_for_hitting, err := SimulateSingleHand(shoe_factory, dealer, dealer_strategy, hit_strategy, betting_strategy, rounds_to_simulate, rules)
 	if err != nil {
 		t.Fatal("Got an error!")
 	}
-	result_for_standing, err := SimulateSingleHand2(shoe_factory, dealer, dealer_strategy, never_bust_strategy, betting_strategy, rounds_to_simulate, rules)
+	result_for_standing, err := SimulateSingleHand(shoe_factory, dealer, dealer_strategy, never_bust_strategy, betting_strategy, rounds_to_simulate, rules)
 	if err != nil {
 		t.Fatal("Got an error!")
 	}

@@ -11,7 +11,7 @@ import (
 
 func TestBettingConstant(t *testing.T) {
 	strat := NewConsistentBettingStrategy(2)
-	if strat.GetUnitsToBet() != 2 {
+	if strat.GetMoneyToBet() != 2 {
 		t.Error("Expected 2 units to bet")
 	}
 }

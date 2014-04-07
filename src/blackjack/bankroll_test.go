@@ -8,10 +8,9 @@ package blackjack
 import "testing"
 
 func TestBankrollChange(t *testing.T) {
-	b := NewBankroll(10)
-	b.ChangeBankroll(1)
-	if b.CurrentBankroll() != 11 {
-		t.Error("I expected a bankroll of 11!")
+	b := NewMoneyHolder()
+	if b.CurrentBankroll() != 0 {
+		t.Error("I expected a bankroll of 0!")
 	}
 }
 

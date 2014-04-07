@@ -55,8 +55,9 @@ func (this *handImpl) SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, err
 	newBankroll := NewMoneyHolder()
 	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
 	h1 := NewHand(this.cards[0])
-	this.h1.MoneyInThisHand()
+	h1.MoneyInThisHand()
 	h2 := NewHand(this.cards[1])
+	this.MoneyInThisHand().TransferMoneyTo(h2.MoneyInThisHand(), this.MoneyInThisHand().CurrentBankroll())
 	return h1, h2, nil
 }
 
@@ -137,7 +138,9 @@ func (this *handImpl) Push(c Card) {
 }
 
 func NewHand(cards ...Card) Hand {
-	h := &handImpl{}
+	h := &handImpl{
+		money: NewMoneyHolder(),
+	}
 	for _, c := range cards {
 		h.Push(c)
 	}
