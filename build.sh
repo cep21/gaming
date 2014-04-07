@@ -1,0 +1,3 @@
+#!/bin/bash
+GOPATH=`pwd`
+env GOPATH=`pwd` go vet ./... && env GOPATH=`pwd` go test -v ./...
