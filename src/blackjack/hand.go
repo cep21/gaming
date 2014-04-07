@@ -12,6 +12,11 @@ type Hand interface {
 	IsSplitHand() bool
 	FirstCard() Card
 	Cards() []Card
+	MoneyInThisHand() MoneyHolder
+	SplitNumber() uint
+	LastAction() GameAction
+	SetLastAction(GameAction)
+	SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error)
 
 	Bust() bool
 	Clone() Hand
@@ -21,15 +26,25 @@ type handImpl struct {
 	cards []Card
 	aceCount uint
 	score uint
-	isSplitHand bool
-}
-
-func (this *handImpl) IsSplitHand() bool {
-	return this.isSplitHand
+	splitNumber uint
+	money MoneyHolder
+	lastAction GameAction
 }
 
 func (this *handImpl) Cards() []Card {
 	return this.cards
+}
+
+func (this *handImpl) MoneyInThisHand() MoneyHolder {
+	return this.money
+}
+
+func (this *handImpl) SetLastAction(lastAction GameAction) {
+	this.lastAction = lastAction
+}
+
+func (this *handImpl) SplitNumber() uint {
+	return this.splitNumber
 }
 
 func (this *handImpl) FirstCard() Card {

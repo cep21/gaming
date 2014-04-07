@@ -12,114 +12,138 @@ import (
 var ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED = errors.New("Tried to surrender but surrender is not allowed")
 var ERR_TRIED_TO_DOUBLE_BUT_NOT_ALLOWED = errors.New("Tried to double but double is not allowed")
 var ERR_TRIED_TO_SPLIT_BUT_NOT_ALLOWED = errors.New("Tried to split but split is not allowed")
+var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 
-func SimulateSingleHand2(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
-	bankroll := NewBankroll(0)
+func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rules Rules, playerBankroll MoneyHolder, houseBankroll MoneyHolder, shoe Shoe) ([]Hand, error) {
+
+	for ; ; {
+		action := playerStrategy.TakeAction(playerHand, dealerHand.FirstCard())
+		playerHand.SetLastAction(action)
+		if action == SURRENDER {
+			if !rules.CanSurrender(playerHand) {
+				return nil, ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED
+			}
+			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() / 2)
+			playerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
+			break
+		} else if action == DOUBLE {
+			if !rules.CanDouble(playerHand) {
+				return nil, ERR_TRIED_TO_DOUBLE_BUT_NOT_ALLOWED
+			}
+			playerBankroll.TransferMoneyTo(playerHand.MoneyInThisHand(), playerHand.MoneyInThisHand().CurrentBankroll())
+			card, err := shoe.Pop()
+			if err != nil {
+				return nil, err
+			}
+			playerHand.Push(card)
+			break
+		} else if action == SPLIT {
+			if !rules.CanSplit(playerHand) {
+				return nil, ERR_TRIED_TO_SPLIT_BUT_NOT_ALLOWED
+			}
+			hand1, hand2, err := playerHand.SplitHand(playerBankroll)
+			if err != nil {
+				return nil, err
+			}
+			hands1, err := PlayHand(hand1, dealerHand, playerStrategy, rules, playerBankroll, houseBankroll, shoe)
+			if err != nil {
+				return nil, err
+			}
+			hands2, err := PlayHand(hand2, dealerHand, playerStrategy, rules, playerBankroll, houseBankroll, shoe)
+			if err != nil {
+				return nil, err
+			}
+			return append(hands1, hands2...), err
+		} else if action == STAND {
+			break
+		} else if action == HIT {
+			card, err := shoe.Pop()
+			if err != nil {
+				return nil, err
+			}
+			playerHand.Push(card)
+		} else {
+			panic("I don't know this other thing to do ...")
+		}
+		if playerHand.Bust() {
+			break
+		}
+	}
+	return []Hand{playerHand}, nil
+}
+
+func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
+	playerBankroll := NewMoneyHolder()
+	houseBankroll := NewMoneyHolder()
+	units_to_bet := bettingStrategy.GetMoneyToBet()
 	for i := uint(0); i < number_of_iterations; i++ {
-		units_to_bet := bettingStrategy.GetUnitsToBet()
 		shoe := shoeFactory.CreateShoe()
-		bankroll.ChangeBankroll(-units_to_bet)
-		player_hands, dealer_hand, err := dealer.DealHands(shoe, 1)
+		//bankroll.ChangeBankroll(-units_to_bet)
+		player_hands, dealerHand, err := dealer.DealHands(shoe, 1)
 		if err != nil {
 			return 0, err
 		}
-		player_hand := player_hands[0]
-		if dealer_hand.IsBlackjack() {
-			if player_hand.IsBlackjack() {
-				// Push
-				bankroll.ChangeBankroll(units_to_bet)
+		playerHand := NewHand(player_hands[0], NewMoneyHolder(), 0)
+		playerBankroll.TransferMoneyTo(playerHand.MoneyInThisHand(), units_to_bet)
+		if dealerHand.IsBlackjack() {
+			if playerHand.IsBlackjack() {
+				// Push the money back
+				playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 				continue
 			} else {
+				playerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 				continue
 			}
-		} else if player_hand.IsBlackjack() {
-			bankroll.ChangeBankroll(+units_to_bet)
-			bankroll.ChangeBankroll(units_to_bet*float64(rules.BlackjackPayout()))
+		} else if playerHand.IsBlackjack() {
+			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() * rules.BlackjackPayout())
+			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 			continue
-		}
-		hand_is_double := false
-		for ; ; {
-			action := playerStrategy.TakeAction(player_hand, dealer_hand.FirstCard())
-			if action == SURRENDER {
-				if !rules.CanSurrender(player_hand) {
-					return 0, ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED
-				}
-				bankroll.ChangeBankroll(units_to_bet/2)
-				break
-			} else if action == DOUBLE {
-				if !rules.CanDouble(player_hand) {
-					return 0, ERR_TRIED_TO_DOUBLE_BUT_NOT_ALLOWED
-				}
-				bankroll.ChangeBankroll(-units_to_bet)
-				hand_is_double = true
-				card, err := shoe.Pop()
-				if err != nil {
-					return 0, err
-				}
-				player_hand.Push(card)
-			} else if action == SPLIT {
-				if !rules.CanSplit(player_hand) {
-					return 0, ERR_TRIED_TO_SPLIT_BUT_NOT_ALLOWED
-				}
-				panic("I don't have split logic yet")
-			} else if action == STAND {
-				break
-				// Do nothing.  Go on to dealer
-			} else if action == HIT {
-				card, err := shoe.Pop()
-				if err != nil {
-					return 0, err
-				}
-				player_hand.Push(card)
-			} else {
-				panic("I don't know this other thing to do ...")
-			}
-			if player_hand.Bust() {
-				break
-			}
-		}
-		if player_hand.Bust() {
-			continue
-		}
-		for ; ; {
-			action := dealerStrategy.TakeAction(dealer_hand, nil)
-			if action == HIT {
-				card, err := shoe.Pop()
-				if err != nil {
-					return 0, err
-				}
-				dealer_hand.Push(card)
-				if dealer_hand.Bust() {
-					break
-				}
-			} else if action == STAND {
-				break
-			} else {
-				panic("Unknown dealer action!")
-			}
-		}
-		if dealer_hand.Bust() {
-			bankroll.ChangeBankroll(units_to_bet*2)
-			continue
-		}
-		//log.Printf("%s vs %s\n", player_hand, dealer_hand)
-		if dealer_hand.Score() > player_hand.Score() {
-			// You loose: nothing
-		} else if dealer_hand.Score() < player_hand.Score() {
-			if hand_is_double {
-				bankroll.ChangeBankroll(units_to_bet*4)
-			} else {
-				bankroll.ChangeBankroll(units_to_bet*2)
-			}
-
-		} else {
-			if hand_is_double {
-				bankroll.ChangeBankroll(units_to_bet*2)
-			} else {
-				bankroll.ChangeBankroll(units_to_bet)
-			}
 		}
 
+		originalAllPlayerHands, err := PlayHand(playerHand, dealerHand, playerStrategy, rules, playerBankroll, houseBankroll, shoe)
+		playerHand = nil
+		if err != nil {
+			return 0, err
+		}
+		nonBustPlayerHands := []Hand{}
+		for _, hand := range originalAllPlayerHands {
+			if hand.Bust() {
+				hand.MoneyInThisHand().TransferMoneyTo(houseBankroll, hand.MoneyInThisHand().CurrentBankroll())
+			} else {
+				nonBustPlayerHands = append(nonBustPlayerHands, hand)
+			}
+		}
+		if len(nonBustPlayerHands) == 0 {
+			continue
+		}
+
+		allDealerHands, err := PlayHand(dealerHand, nil, dealerStrategy, rules, nil, nil, shoe)
+		if err != nil {
+			return 0, err
+		}
+		if len(allDealerHands) != 1 || allDealerHands[0] != dealerHand {
+			return 0, ERR_INVALID_DEALER_OPERATION
+		}
+
+		for _, finalPlayerHand := range nonBustPlayerHands {
+			if dealerHand.Bust() {
+				houseBankroll.TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
+				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
+				continue
+			}
+			//log.Printf("%s vs %s\n", player_hand, dealer_hand)
+			if dealerHand.Score() > finalPlayerHand.Score() {
+				// You loose, give it to the house
+				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
+			} else if dealerHand.Score() < finalPlayerHand.Score() {
+				// You win.  Take some from the house
+				houseBankroll.TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
+				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
+			} else {
+				// Push the money back
+				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
+			}
+		}
 	}
-	return bankroll.CurrentBankroll()/float64(number_of_iterations), nil
+	return playerBankroll.CurrentBankroll()/float64(number_of_iterations), nil
 }

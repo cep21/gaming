@@ -5,23 +5,32 @@
  */
 package blackjack
 
-type Bankroll interface {
-	ChangeBankroll(amount float64)
-	CurrentBankroll() float64
+// A currency that you can bet and win
+type Money float64
+
+// An object that holds some amount of money
+type MoneyHolder interface {
+	// Transfers money from this object that holds money to another object that holds money
+	TransferMoneyTo(MoneyHolder, Money)
+	// Gets the current amount of money in this holder
+	CurrentBankroll() Money
+	// A private interface to give a holder money
+	giveMoney(Money)
 }
 
-type bankrollImpl struct {
-	currentBankroll float64
+type moneyHolderImpl struct {
+	currentBankroll Money
 }
 
-func (this *bankrollImpl) ChangeBankroll(amount float64) {
-	this.currentBankroll += amount
+func (this *moneyHolderImpl) TransferMoneyTo(moneyHolder MoneyHolder, amount Money) {
+	this.currentBankroll -= amount
+	moneyHolder.giveMoney(amount)
 }
 
-func (this *bankrollImpl) CurrentBankroll() float64 {
+func (this *moneyHolderImpl) CurrentBankroll() Money {
 	return this.currentBankroll
 }
 
-func NewBankroll(startingAmount float64) Bankroll {
-	return &bankrollImpl{currentBankroll:startingAmount}
+func NewMoneyHolder() MoneyHolder {
+	return &moneyHolderImpl{currentBankroll:Money(0)}
 }

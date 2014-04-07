@@ -5,18 +5,19 @@
  */
 package blackjack
 
+// A strategy to pick how much money to bet
 type BettingStrategy interface {
-	GetUnitsToBet() float64
+	GetMoneyToBet() Money
 }
 
 type consistentBettingStrategy struct {
-	units float64
+	money Money
 }
 
-func NewConsistentBettingStrategy(units float64) BettingStrategy {
-	return &consistentBettingStrategy{units}
+func NewConsistentBettingStrategy(money Money) BettingStrategy {
+	return &consistentBettingStrategy{money: money}
 }
 
-func (this *consistentBettingStrategy) GetUnitsToBet() float64 {
+func (this *consistentBettingStrategy) GetMoneyToBet() Money {
 	return this.units
 }
