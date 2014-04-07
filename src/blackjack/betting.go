@@ -19,5 +19,5 @@ func NewConsistentBettingStrategy(money Money) BettingStrategy {
 }
 
 func (this *consistentBettingStrategy) GetMoneyToBet() Money {
-	return this.units
+	return this.money
 }

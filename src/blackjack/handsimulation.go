@@ -75,16 +75,17 @@ func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rul
 func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
 	playerBankroll := NewMoneyHolder()
 	houseBankroll := NewMoneyHolder()
-	units_to_bet := bettingStrategy.GetMoneyToBet()
+	//units_to_bet := bettingStrategy.GetMoneyToBet()
 	for i := uint(0); i < number_of_iterations; i++ {
 		shoe := shoeFactory.CreateShoe()
 		//bankroll.ChangeBankroll(-units_to_bet)
-		player_hands, dealerHand, err := dealer.DealHands(shoe, 1)
+		player_hands, dealerHand, err := dealer.DealHands(shoe, []BettingStrategy{bettingStrategy}, []MoneyHolder{playerBankroll})
 		if err != nil {
 			return 0, err
 		}
-		playerHand := NewHand(player_hands[0], NewMoneyHolder(), 0)
-		playerBankroll.TransferMoneyTo(playerHand.MoneyInThisHand(), units_to_bet)
+		playerHand := player_hands[0]
+		//playerHand := NewHand(player_hands[0], NewMoneyHolder(), 0)
+		//playerBankroll.TransferMoneyTo(playerHand.MoneyInThisHand(), units_to_bet)
 		if dealerHand.IsBlackjack() {
 			if playerHand.IsBlackjack() {
 				// Push the money back
@@ -95,7 +96,7 @@ func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrate
 				continue
 			}
 		} else if playerHand.IsBlackjack() {
-			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() * rules.BlackjackPayout())
+			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() * Money(rules.BlackjackPayout()))
 			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 			continue
 		}
@@ -145,5 +146,5 @@ func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrate
 			}
 		}
 	}
-	return playerBankroll.CurrentBankroll()/float64(number_of_iterations), nil
+	return float64(playerBankroll.CurrentBankroll())/float64(number_of_iterations), nil
 }

@@ -31,6 +31,10 @@ func (this *moneyHolderImpl) CurrentBankroll() Money {
 	return this.currentBankroll
 }
 
+func (this *moneyHolderImpl) giveMoney(money Money) {
+	this.currentBankroll += money
+}
+
 func NewMoneyHolder() MoneyHolder {
 	return &moneyHolderImpl{currentBankroll:Money(0)}
 }

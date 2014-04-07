@@ -5,7 +5,7 @@
  */
 package blackjack
 
-import "errors"
+//import "errors"
 
 //var errUnableToSplit = errors.New("Unable to split this hand")
 //

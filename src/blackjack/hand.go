@@ -9,7 +9,7 @@ type Hand interface {
 	Size() uint
 	Push(c Card)
 	IsBlackjack() bool
-	IsSplitHand() bool
+//	IsSplitHand() bool
 	FirstCard() Card
 	Cards() []Card
 	MoneyInThisHand() MoneyHolder
@@ -19,7 +19,7 @@ type Hand interface {
 	SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error)
 
 	Bust() bool
-	Clone() Hand
+	Clone(bankrollToDrawFrom MoneyHolder) Hand
 }
 
 type handImpl struct {
@@ -41,6 +41,14 @@ func (this *handImpl) MoneyInThisHand() MoneyHolder {
 
 func (this *handImpl) SetLastAction(lastAction GameAction) {
 	this.lastAction = lastAction
+}
+
+func (this *handImpl) LastAction() GameAction {
+	return this.lastAction
+}
+
+func (this *handImpl) SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error) {
+
 }
 
 func (this *handImpl) SplitNumber() uint {
@@ -82,8 +90,17 @@ func (this *handImpl) Size() uint {
 	return uint(len(this.cards))
 }
 
-func (this *handImpl) Clone() Hand {
-	return &handImpl{this.cards, this.aceCount, this.score, this.isSplitHand}
+func (this *handImpl) Clone(bankrollToDrawFrom MoneyHolder) Hand {
+	newBankroll := NewMoneyHolder()
+	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
+	return &handImpl{
+		cards: this.cards,
+		aceCount: this.aceCount,
+		score: this.score,
+		splitNumber: this.splitNumber,
+		money: newBankroll,
+		lastAction: this.lastAction,
+	}
 }
 
 func (this *handImpl) IsBlackjack() bool {

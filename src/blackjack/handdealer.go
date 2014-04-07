@@ -10,7 +10,7 @@ import "errors"
 var ERR_NOT_ENOUGH_CARDS_TO_DEAL_HANDS = errors.New("Not enough cards to deal all the hands")
 
 type HandDealer interface {
-	DealHands(deck Shoe, number_of_players uint) ([]Hand, Hand, error)
+	DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error)
 }
 
 type basicHandDealer struct {
@@ -21,13 +21,15 @@ func NewBasicHandDealer() HandDealer {
 }
 
 
-func (this *basicHandDealer) DealHands(deck Shoe, number_of_players uint) ([]Hand, Hand, error) {
-	player_hands := make([]Hand, number_of_players)
+func (this *basicHandDealer) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error) {
+	player_hands := make([]Hand, len(playerBettingStrategies))
 	dealer_hand := NewHand()
 	for j:=0;j<2;j++ {
-		for i := uint(0); i<number_of_players;i++ {
+		for i := 0; i<len(playerBettingStrategies);i++ {
 			if j == 0 {
 				player_hands[i] = NewHand()
+				units_to_bet := playerBettingStrategies[i].GetMoneyToBet()
+				playerBankrolls[i].TransferMoneyTo(player_hands[i].MoneyInThisHand(), units_to_bet)
 			}
 			card, err := deck.Pop()
 			if err != nil {
@@ -56,11 +58,11 @@ func NewForceDealerPlayerHands(playerHandToForce Hand, dealerUpCardToForce Value
 	}
 }
 
-func (this *forceDealerPlayerHands) DealHands(deck Shoe, number_of_players uint) ([]Hand, Hand, error) {
-	player_hands := make([]Hand, number_of_players)
+func (this *forceDealerPlayerHands) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error) {
+	player_hands := make([]Hand, len(playerBettingStrategies))
 	dealer_hand := NewHand()
 
-	for i := uint(0); i<number_of_players;i++ {
+	for i := 0; i<len(playerBettingStrategies);i++ {
 		hand_cards := []Card{}
 		for _, c := range this.playerHandToForce.Cards() {
 			card, err := deck.TakeValueFromShoe(c.BlackjackValue())
@@ -70,6 +72,8 @@ func (this *forceDealerPlayerHands) DealHands(deck Shoe, number_of_players uint)
 			hand_cards = append(hand_cards, card)
 		}
 		player_hands[i] = NewHand(hand_cards...)
+		units_to_bet := playerBettingStrategies[i].GetMoneyToBet()
+		playerBankrolls[i].TransferMoneyTo(player_hands[i].MoneyInThisHand(), units_to_bet)
 	}
 	card, err := deck.TakeValueFromShoe(this.dealerUpCardToForce)
 	if err != nil {
