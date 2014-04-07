@@ -9,7 +9,7 @@ type Hand interface {
 	Size() uint
 	Push(c Card)
 	IsBlackjack() bool
-//	IsSplitHand() bool
+	IsSplitHand() bool
 	FirstCard() Card
 	Cards() []Card
 	MoneyInThisHand() MoneyHolder
@@ -35,6 +35,10 @@ func (this *handImpl) Cards() []Card {
 	return this.cards
 }
 
+func (this *handImpl) IsSplitHand() bool {
+	return this.splitNumber > 0
+}
+
 func (this *handImpl) MoneyInThisHand() MoneyHolder {
 	return this.money
 }
@@ -48,7 +52,12 @@ func (this *handImpl) LastAction() GameAction {
 }
 
 func (this *handImpl) SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error) {
-
+	newBankroll := NewMoneyHolder()
+	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
+	h1 := NewHand(this.cards[0])
+	this.h1.MoneyInThisHand()
+	h2 := NewHand(this.cards[1])
+	return h1, h2, nil
 }
 
 func (this *handImpl) SplitNumber() uint {
