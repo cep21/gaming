@@ -17,7 +17,13 @@ var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rules Rules, playerBankroll MoneyHolder, houseBankroll MoneyHolder, shoe Shoe) ([]Hand, error) {
 
 	for ; ; {
-		action := playerStrategy.TakeAction(playerHand, dealerHand.FirstCard())
+		var action GameAction
+		if dealerHand != nil {
+			action = playerStrategy.TakeAction(playerHand, dealerHand.FirstCard())
+		} else {
+			action = playerStrategy.TakeAction(playerHand, nil)
+		}
+
 		playerHand.SetLastAction(action)
 		if action == SURRENDER {
 			if !rules.CanSurrender(playerHand) {
@@ -129,7 +135,7 @@ func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrate
 		for _, finalPlayerHand := range nonBustPlayerHands {
 			if dealerHand.Bust() {
 				houseBankroll.TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
+				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
 				continue
 			}
 			//log.Printf("%s vs %s\n", player_hand, dealer_hand)
