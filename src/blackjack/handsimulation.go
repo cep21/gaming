@@ -7,6 +7,7 @@ package blackjack
 
 import (
 	"errors"
+	"gaming/bankroll"
 )
 
 var ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED = errors.New("Tried to surrender but surrender is not allowed")
@@ -14,7 +15,7 @@ var ERR_TRIED_TO_DOUBLE_BUT_NOT_ALLOWED = errors.New("Tried to double but double
 var ERR_TRIED_TO_SPLIT_BUT_NOT_ALLOWED = errors.New("Tried to split but split is not allowed")
 var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 
-func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rules Rules, playerBankroll MoneyHolder, houseBankroll MoneyHolder, shoe Shoe) ([]Hand, error) {
+func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rules Rules, playerBankroll bankroll.MoneyHolder, houseBankroll bankroll.MoneyHolder, shoe Shoe) ([]Hand, error) {
 
 	for ; ; {
 		var action GameAction
@@ -29,7 +30,7 @@ func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rul
 			if !rules.CanSurrender(playerHand) {
 				return nil, ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED
 			}
-			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() / 2)
+			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll()/2)
 			playerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 			break
 		} else if action == DOUBLE {
@@ -79,13 +80,13 @@ func PlayHand(playerHand Hand, dealerHand Hand, playerStrategy PlayStrategy, rul
 }
 
 func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
-	playerBankroll := NewMoneyHolder()
-	houseBankroll := NewMoneyHolder()
+	playerBankroll := bankroll.NewMoneyHolder()
+	houseBankroll := bankroll.NewMoneyHolder()
 	//units_to_bet := bettingStrategy.GetMoneyToBet()
 	for i := uint(0); i < number_of_iterations; i++ {
 		shoe := shoeFactory.CreateShoe()
 		//bankroll.ChangeBankroll(-units_to_bet)
-		player_hands, dealerHand, err := dealer.DealHands(shoe, []BettingStrategy{bettingStrategy}, []MoneyHolder{playerBankroll})
+		player_hands, dealerHand, err := dealer.DealHands(shoe, []BettingStrategy{bettingStrategy}, []bankroll.MoneyHolder{playerBankroll})
 		if err != nil {
 			return 0, err
 		}
@@ -102,7 +103,7 @@ func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrate
 				continue
 			}
 		} else if playerHand.IsBlackjack() {
-			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll() * Money(rules.BlackjackPayout()))
+			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll()*bankroll.Money(rules.BlackjackPayout()))
 			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 			continue
 		}

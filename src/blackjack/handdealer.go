@@ -5,12 +5,15 @@
  */
 package blackjack
 
-import "errors"
+import (
+	"errors"
+	"gaming/bankroll"
+)
 
 var ERR_NOT_ENOUGH_CARDS_TO_DEAL_HANDS = errors.New("Not enough cards to deal all the hands")
 
 type HandDealer interface {
-	DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error)
+	DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []bankroll.MoneyHolder) ([]Hand, Hand, error)
 }
 
 type basicHandDealer struct {
@@ -20,12 +23,11 @@ func NewBasicHandDealer() HandDealer {
 	return &basicHandDealer{}
 }
 
-
-func (this *basicHandDealer) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error) {
+func (this *basicHandDealer) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []bankroll.MoneyHolder) ([]Hand, Hand, error) {
 	player_hands := make([]Hand, len(playerBettingStrategies))
 	dealer_hand := NewHand()
-	for j:=0;j<2;j++ {
-		for i := 0; i<len(playerBettingStrategies);i++ {
+	for j := 0; j < 2; j++ {
+		for i := 0; i < len(playerBettingStrategies); i++ {
 			if j == 0 {
 				player_hands[i] = NewHand()
 				units_to_bet := playerBettingStrategies[i].GetMoneyToBet()
@@ -47,7 +49,7 @@ func (this *basicHandDealer) DealHands(deck Shoe, playerBettingStrategies []Bett
 }
 
 type forceDealerPlayerHands struct {
-	playerHandToForce Hand
+	playerHandToForce   Hand
 	dealerUpCardToForce Value
 }
 
@@ -58,11 +60,11 @@ func NewForceDealerPlayerHands(playerHandToForce Hand, dealerUpCardToForce Value
 	}
 }
 
-func (this *forceDealerPlayerHands) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []MoneyHolder) ([]Hand, Hand, error) {
+func (this *forceDealerPlayerHands) DealHands(deck Shoe, playerBettingStrategies []BettingStrategy, playerBankrolls []bankroll.MoneyHolder) ([]Hand, Hand, error) {
 	player_hands := make([]Hand, len(playerBettingStrategies))
 	dealer_hand := NewHand()
 
-	for i := 0; i<len(playerBettingStrategies);i++ {
+	for i := 0; i < len(playerBettingStrategies); i++ {
 		hand_cards := []Card{}
 		for _, c := range this.playerHandToForce.Cards() {
 			card, err := deck.TakeValueFromShoe(c.BlackjackValue())

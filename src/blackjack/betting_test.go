@@ -15,4 +15,3 @@ func TestBettingConstant(t *testing.T) {
 		t.Error("Expected 2 units to bet")
 	}
 }
-

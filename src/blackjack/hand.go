@@ -1,6 +1,9 @@
 package blackjack
 
-import "strconv"
+import (
+	"strconv"
+	"gaming/bankroll"
+)
 
 type Hand interface {
 	Score() uint
@@ -12,23 +15,23 @@ type Hand interface {
 	IsSplitHand() bool
 	FirstCard() Card
 	Cards() []Card
-	MoneyInThisHand() MoneyHolder
+	MoneyInThisHand() bankroll.MoneyHolder
 	SplitNumber() uint
 	LastAction() GameAction
 	SetLastAction(GameAction)
-	SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error)
+	SplitHand(bankrollToDrawFrom bankroll.MoneyHolder) (Hand, Hand, error)
 
 	Bust() bool
-	Clone(bankrollToDrawFrom MoneyHolder) Hand
+	Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand
 }
 
 type handImpl struct {
-	cards []Card
-	aceCount uint
-	score uint
+	cards       []Card
+	aceCount    uint
+	score       uint
 	splitNumber uint
-	money MoneyHolder
-	lastAction GameAction
+	money       bankroll.MoneyHolder
+	lastAction  GameAction
 }
 
 func (this *handImpl) Cards() []Card {
@@ -39,7 +42,7 @@ func (this *handImpl) IsSplitHand() bool {
 	return this.splitNumber > 0
 }
 
-func (this *handImpl) MoneyInThisHand() MoneyHolder {
+func (this *handImpl) MoneyInThisHand() bankroll.MoneyHolder {
 	return this.money
 }
 
@@ -51,8 +54,8 @@ func (this *handImpl) LastAction() GameAction {
 	return this.lastAction
 }
 
-func (this *handImpl) SplitHand(bankrollToDrawFrom MoneyHolder) (Hand, Hand, error) {
-	newBankroll := NewMoneyHolder()
+func (this *handImpl) SplitHand(bankrollToDrawFrom bankroll.MoneyHolder) (Hand, Hand, error) {
+	newBankroll := bankroll.NewMoneyHolder()
 	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
 	h1 := NewHand(this.cards[0])
 	h1.MoneyInThisHand()
@@ -100,8 +103,8 @@ func (this *handImpl) Size() uint {
 	return uint(len(this.cards))
 }
 
-func (this *handImpl) Clone(bankrollToDrawFrom MoneyHolder) Hand {
-	newBankroll := NewMoneyHolder()
+func (this *handImpl) Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand {
+	newBankroll := bankroll.NewMoneyHolder()
 	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
 	return &handImpl{
 		cards: this.cards,
@@ -139,7 +142,7 @@ func (this *handImpl) Push(c Card) {
 
 func NewHand(cards ...Card) Hand {
 	h := &handImpl{
-		money: NewMoneyHolder(),
+		money: bankroll.NewMoneyHolder(),
 	}
 	for _, c := range cards {
 		h.Push(c)
