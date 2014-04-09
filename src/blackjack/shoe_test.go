@@ -1,13 +1,13 @@
 /**
  * Date: 4/3/14
  * Time: 1:24 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
 import (
-	"testing"
 	"math/rand"
+	"testing"
 )
 
 func TestDeck(t *testing.T) {
@@ -39,7 +39,7 @@ func TestInfiniteDeck(t *testing.T) {
 	if err != nil {
 		t.Error("Do not expect errors from an infinite shoe")
 	}
-	for i := 0;i<1000;i++ {
+	for i := 0; i < 1000; i++ {
 		c, err := d.TakeValueFromShoe(Ace)
 		if c == nil || err != nil {
 			t.Error("Did not expect to run out of aces from an infinite shoe")
@@ -59,7 +59,7 @@ func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
 		t.Errorf("Expect 52 values")
 	}
 	counts_per_suit := []uint{0, 0, 0, 0}
-	for i := 0;i<4;i++ {
+	for i := 0; i < 4; i++ {
 		c, err := d.TakeValueFromShoe(Ace)
 		if c == nil || err != nil {
 			t.Error("Did not expect to run out of 4 aces")
@@ -78,9 +78,9 @@ func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
 		t.Error("We should be out of aces by now!")
 	}
 
-	cards_left := uint(52 - 4);
-	num_eights := 0;
-	for i:=0;i<52-4;i++ {
+	cards_left := uint(52 - 4)
+	num_eights := 0
+	for i := 0; i < 52-4; i++ {
 		c, err := d.Pop()
 		if err != nil {
 			t.Error("I don't expect an error poping from the deck")
@@ -88,7 +88,7 @@ func singleDeckVerificiation(t *testing.T, d Shoe, number_of_decks uint) {
 		if c.Value() == Eight {
 			num_eights++
 		}
-		cards_left--;
+		cards_left--
 		if d.CardsLeft() != cards_left {
 			t.Errorf("Expected %d cards left, not %d\n", cards_left, d.CardsLeft())
 		}

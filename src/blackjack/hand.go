@@ -1,8 +1,8 @@
 package blackjack
 
 import (
-	"strconv"
 	"gaming/bankroll"
+	"strconv"
 )
 
 type Hand interface {
@@ -35,13 +35,13 @@ type handHolderImpl struct {
 }
 
 func NewHandHolder() HandHolder {
-	return &handHolderImpl{hands:nil}
+	return &handHolderImpl{hands: nil}
 }
 
-func (holder* handHolderImpl) Hands() []Hand {
+func (holder *handHolderImpl) Hands() []Hand {
 	return holder.hands
 }
-func (holder* handHolderImpl) SetHands(hands []Hand) {
+func (holder *handHolderImpl) SetHands(hands []Hand) {
 	holder.hands = hands
 }
 
@@ -99,9 +99,9 @@ func (this *handImpl) FirstCard() Card {
 
 func (this *handImpl) Score() uint {
 	if this.IsSoft() {
-		return this.score + 10;
+		return this.score + 10
 	} else {
-		return this.score;
+		return this.score
 	}
 }
 
@@ -127,12 +127,12 @@ func (this *handImpl) Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand {
 	newBankroll := bankroll.NewMoneyHolder()
 	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
 	return &handImpl{
-		cards: this.cards,
-		aceCount: this.aceCount,
-		score: this.score,
+		cards:       this.cards,
+		aceCount:    this.aceCount,
+		score:       this.score,
 		splitNumber: this.splitNumber,
-		money: newBankroll,
-		lastAction: this.lastAction,
+		money:       newBankroll,
+		lastAction:  this.lastAction,
 	}
 }
 
@@ -145,7 +145,7 @@ func (this *handImpl) CanSplit() bool {
 }
 
 func (this *handImpl) IsSoft() bool {
-	return this.aceCount > 0 && this.score < 12;
+	return this.aceCount > 0 && this.score < 12
 }
 
 func (this *handImpl) Bust() bool {
@@ -156,7 +156,7 @@ func (this *handImpl) Push(c Card) {
 	this.cards = append(this.cards, c)
 	this.score += c.Score()
 	if c.Value() == Ace {
-		this.aceCount++;
+		this.aceCount++
 	}
 }
 

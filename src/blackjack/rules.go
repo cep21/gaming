@@ -7,7 +7,7 @@ func AllValues() []uint {
 type BlackjackPayout float64
 
 const NORMAL_PAYOUT = 1.5
-const SIXFIVE_PAYOUT = 6.0/5.0
+const SIXFIVE_PAYOUT = 6.0 / 5.0
 
 type SurrenderOption interface {
 	Name() string
@@ -53,8 +53,8 @@ type rulesImpl struct {
 	penetration      float64
 	surrenderOption  SurrenderOption
 
-	hardDoubleLookup      []bool
-	softDoubleLookup      []bool
+	hardDoubleLookup []bool
+	softDoubleLookup []bool
 }
 
 func (this *rulesImpl) DealerHitOnSoft17() bool {
@@ -95,7 +95,7 @@ func (this *rulesImpl) CanSplit(hand Hand) bool {
 
 func (this *rulesImpl) CanSurrender(hand Hand) bool {
 	if hand.Size() > 2 {
-		return false;
+		return false
 	} else if hand.Size() == 2 {
 		return this.surrenderOption != NO_SURRENDER
 	} else {
@@ -164,14 +164,14 @@ var DEFAULT_SURRENDER_OPTION = NO_SURRENDER
 func NewRulesetFactory() RulesetFactory {
 	return &rulesetFactoryImpl{
 		doubleAfterSplit: DEFAULT_DOUBLE_AFTER_SPLIT,
-		maxResplits: DEFAULT_MAX_RESPLITS,
-		hitSoft17: DEFAULT_HIT_SOFT_17,
-		resplitAces: DEFAULT_RESPLIT_ACES,
+		maxResplits:      DEFAULT_MAX_RESPLITS,
+		hitSoft17:        DEFAULT_HIT_SOFT_17,
+		resplitAces:      DEFAULT_RESPLIT_ACES,
 		hardDoubleValues: DEFAULT_HARD_DOUBLE_VALUES,
 		softDoubleValues: DEFAULT_SOFT_DOUBLE_VALUES,
-		payout: BlackjackPayout(DEFAULT_PAYOUT),
-		penetration: DEFAULT_PENETRATION,
-		surrenderOption: DEFAULT_SURRENDER_OPTION,
+		payout:           BlackjackPayout(DEFAULT_PAYOUT),
+		penetration:      DEFAULT_PENETRATION,
+		surrenderOption:  DEFAULT_SURRENDER_OPTION,
 	}
 }
 
@@ -188,14 +188,14 @@ func (this *rulesetFactoryImpl) Build() Rules {
 
 	return &rulesImpl{
 		doubleAfterSplit: this.doubleAfterSplit,
-		maxResplits: this.maxResplits,
-		hitSoft17: this.hitSoft17,
-		resplitAces: this.resplitAces,
+		maxResplits:      this.maxResplits,
+		hitSoft17:        this.hitSoft17,
+		resplitAces:      this.resplitAces,
 		hardDoubleValues: this.hardDoubleValues,
 		softDoubleValues: this.softDoubleValues,
-		payout: this.payout,
-		penetration: this.penetration,
-		surrenderOption: this.surrenderOption,
+		payout:           this.payout,
+		penetration:      this.penetration,
+		surrenderOption:  this.surrenderOption,
 		hardDoubleLookup: hardDoubles,
 		softDoubleLookup: softDoubles,
 	}

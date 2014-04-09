@@ -1,13 +1,13 @@
 /**
  * Date: 4/1/14
  * Time: 3:49 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
 import (
-	"testing"
 	"gaming"
+	"testing"
 )
 
 func TestDealerSoftHit(t *testing.T) {

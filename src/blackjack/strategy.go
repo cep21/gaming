@@ -1,7 +1,7 @@
 /**
  * Date: 4/1/14
  * Time: 3:46 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
@@ -33,7 +33,6 @@ var DOUBLE = &gameActionImpl{"double", 'D'}
 var SPLIT = &gameActionImpl{"split", 'P'}
 var SURRENDER = &gameActionImpl{"surrender", 'U'}
 
-
 type PlayStrategy interface {
 	TakeAction(currentHand Hand, shownCard Card) GameAction
 }
@@ -42,7 +41,7 @@ type dealerHitStrategy struct {
 	hitOnSoft17 bool
 }
 
-func (this* dealerHitStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
+func (this *dealerHitStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
 	score := currentHand.Score()
 	if score == 17 {
 		if this.hitOnSoft17 && currentHand.IsSoft() {
@@ -67,8 +66,8 @@ func NewDealerStrategy(hitOnSoft17 bool) PlayStrategy {
 type alwaysHitStrategy struct {
 }
 
-func (this* alwaysHitStrategy) TakeAction(_ Hand, _ Card) GameAction {
-	return HIT;
+func (this *alwaysHitStrategy) TakeAction(_ Hand, _ Card) GameAction {
+	return HIT
 }
 
 func NewAlwaysHitStrategy() PlayStrategy {
@@ -79,8 +78,8 @@ func NewAlwaysHitStrategy() PlayStrategy {
 type alwaysStandStrategy struct {
 }
 
-func (this* alwaysStandStrategy) TakeAction(_ Hand, _ Card) GameAction {
-	return STAND;
+func (this *alwaysStandStrategy) TakeAction(_ Hand, _ Card) GameAction {
+	return STAND
 }
 
 func NewAlwaysStandStrategy() PlayStrategy {
@@ -92,11 +91,11 @@ type neverBustStrategy struct {
 	shouldHitSoft bool
 }
 
-func (this* neverBustStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
+func (this *neverBustStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
 	if (currentHand.IsSoft() && this.shouldHitSoft) || currentHand.Score() < 12 {
-		return HIT;
+		return HIT
 	} else {
-		return STAND;
+		return STAND
 	}
 }
 
@@ -104,8 +103,8 @@ func NewNeverBustStrategy(should_hit_soft bool) PlayStrategy {
 	return &neverBustStrategy{should_hit_soft}
 }
 
-func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy PlayStrategy, deck Shoe)  {
-	for ; deck.CardsLeft() != 0; {
+func PlayHandOnStrategy(currentHand Hand, shownCard Card, strategy PlayStrategy, deck Shoe) {
+	for deck.CardsLeft() != 0 {
 		if currentHand.Bust() {
 			return
 		}
@@ -130,7 +129,7 @@ type hitOnAScoreStrategy struct {
 	softScoreToHit uint
 }
 
-func (this* hitOnAScoreStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
+func (this *hitOnAScoreStrategy) TakeAction(currentHand Hand, _ Card) GameAction {
 	if (currentHand.IsSoft() && currentHand.Score() <= this.softScoreToHit) || (!currentHand.IsSoft() && currentHand.Score() <= this.hardScoreToHit) {
 		return HIT
 	} else {

@@ -1,7 +1,7 @@
 /**
  * Date: 4/4/14
  * Time: 1:10 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
@@ -56,7 +56,7 @@ type forceDealerPlayerHands struct {
 
 func NewForceDealerPlayerHands(playerHandToForce Hand, dealerUpCardToForce Value) HandDealer {
 	return &forceDealerPlayerHands{
-		playerHandToForce: playerHandToForce,
+		playerHandToForce:   playerHandToForce,
 		dealerUpCardToForce: dealerUpCardToForce,
 	}
 }
@@ -90,4 +90,3 @@ func (this *forceDealerPlayerHands) DealHands(deck Shoe, players []Player, deale
 	dealerHand.Push(dealer_second_card)
 	return nil
 }
-

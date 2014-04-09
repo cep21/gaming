@@ -1,8 +1,8 @@
 package blackjack
 
 import (
-	"testing"
 	"gaming"
+	"testing"
 )
 
 func TestSplit(t *testing.T) {
@@ -33,11 +33,11 @@ func TestSoftAgain(t *testing.T) {
 	// 5 4 A A 2 8 => 21 (Hard)
 	// 5 4 A A 2 8 A => 22 (Hard)
 	type handScore struct {
-		value Value
+		value         Value
 		expectedScore uint
-		isSoft bool
+		isSoft        bool
 	}
-	v := []handScore {
+	v := []handScore{
 		handScore{Five, 5, false},
 		handScore{Four, 9, false},
 		handScore{Ace, 20, true},

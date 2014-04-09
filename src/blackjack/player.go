@@ -3,14 +3,14 @@ package blackjack
 import "gaming/bankroll"
 
 type Player interface {
-HandHolder
-Better
+	HandHolder
+	Better
 	PlayStrategy() PlayStrategy
 }
 
 type HandHolderBetter interface {
-HandHolder
-Better
+	HandHolder
+	Better
 }
 
 type BankrolledStrategy interface {
@@ -27,8 +27,8 @@ type playerImpl struct {
 
 func NewPlayer(bettingStrategy BettingStrategy, playStrategy PlayStrategy) Player {
 	return &playerImpl{
-		HandHolder: NewHandHolder(),
-		Better: NewBetter(bankroll.NewMoneyHolder(), bettingStrategy),
+		HandHolder:   NewHandHolder(),
+		Better:       NewBetter(bankroll.NewMoneyHolder(), bettingStrategy),
 		playStrategy: playStrategy,
 	}
 }

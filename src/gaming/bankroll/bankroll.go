@@ -1,7 +1,7 @@
 /**
  * Date: 4/4/14
  * Time: 10:55 AM
- * @author jack 
+ * @author jack
  */
 package bankroll
 
@@ -36,5 +36,5 @@ func (this *moneyHolderImpl) giveMoney(money Money) {
 }
 
 func NewMoneyHolder() MoneyHolder {
-	return &moneyHolderImpl{currentBankroll:Money(0)}
+	return &moneyHolderImpl{currentBankroll: Money(0)}
 }

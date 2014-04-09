@@ -12,7 +12,7 @@ type Dice interface {
 
 type diceImpl struct {
 	sides uint
-	rand *rand.Rand
+	rand  *rand.Rand
 }
 
 func NewDice(sides uint) Dice {

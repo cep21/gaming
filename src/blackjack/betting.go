@@ -1,7 +1,7 @@
 /**
  * Date: 4/2/14
  * Time: 4:15 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
@@ -31,7 +31,7 @@ func (better *betterImpl) BettingStrategy() BettingStrategy {
 
 func NewBetter(bankroll bankroll.MoneyHolder, bettingStrategy BettingStrategy) Better {
 	return &betterImpl{
-		bankroll: bankroll,
+		bankroll:        bankroll,
 		bettingStrategy: bettingStrategy,
 	}
 }

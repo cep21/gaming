@@ -1,7 +1,7 @@
 /**
  * Date: 4/2/14
  * Time: 2:02 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 
@@ -17,7 +17,7 @@ var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 
 func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStrategy, rules Rules, houseBankroll bankroll.MoneyHolder, shoe Shoe) ([]Hand, error) {
 
-	for ; ; {
+	for {
 		var action GameAction
 		if dealerHand != nil {
 			action = bankrolledStrategy.PlayStrategy().TakeAction(playerHand, dealerHand.FirstCard())
@@ -79,11 +79,10 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 	return []Hand{playerHand}, nil
 }
 
-
 func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
-//	playerBankroll := bankroll.NewMoneyHolder()
-//	houseBankroll := bankroll.NewMoneyHolder()
-//	units_to_bet := bettingStrategy.GetMoneyToBet()
+	//	playerBankroll := bankroll.NewMoneyHolder()
+	//	houseBankroll := bankroll.NewMoneyHolder()
+	//	units_to_bet := bettingStrategy.GetMoneyToBet()
 	table := NewTable(NewDealer(dealerStrategy, handDealer), shoeFactory, 1, rules)
 	player := NewPlayer(bettingStrategy, playerStrategy)
 	table.SetPlayer(player, 0)

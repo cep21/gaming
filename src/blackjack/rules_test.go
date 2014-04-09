@@ -1,12 +1,12 @@
 package blackjack
 
 import (
-	"testing"
 	"gaming"
+	"testing"
 )
 
 func TestRules(t *testing.T) {
-	rules := NewRulesetFactory().HardDoubleValues([]uint{9,10,11}).Build()
+	rules := NewRulesetFactory().HardDoubleValues([]uint{9, 10, 11}).Build()
 	h := NewHand()
 	h.Push(NewCard(gaming.Spade, Four))
 	h.Push(NewCard(gaming.Spade, Four))

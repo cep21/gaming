@@ -1,9 +1,9 @@
 package blackjack
 
 import (
-	"testing"
 	"gaming"
 	"math/rand"
+	"testing"
 )
 
 func TestSuits(t *testing.T) {

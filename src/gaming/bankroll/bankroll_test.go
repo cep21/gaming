@@ -1,7 +1,7 @@
 /**
  * Date: 4/4/14
  * Time: 10:57 AM
- * @author jack 
+ * @author jack
  */
 package bankroll
 
@@ -21,4 +21,3 @@ func TestBankrollChange(t *testing.T) {
 		t.Error("Expected a final bankroll of 10")
 	}
 }
-

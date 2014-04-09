@@ -22,12 +22,12 @@ type tableImpl struct {
 }
 
 func NewTable(dealer Dealer, shoeFactory ShoeFactory, spots uint, rules Rules) Table {
-	return &tableImpl {
-		spots: spots,
-		players: make([]Player, spots),
-		dealer: dealer,
+	return &tableImpl{
+		spots:       spots,
+		players:     make([]Player, spots),
+		dealer:      dealer,
 		shoeFactory: shoeFactory,
-		rules: rules,
+		rules:       rules,
 	}
 }
 
@@ -118,7 +118,6 @@ func (table *tableImpl) PlayRound() error {
 		}
 		activePlayer.SetHands(finalPlayerHands)
 	}
-
 
 	allDealerHands, err := PlayHand(dealerHand, nil, table.dealer, table.rules, table.dealer.Bankroll(), shoe)
 	if err != nil {

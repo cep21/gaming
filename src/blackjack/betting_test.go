@@ -1,7 +1,7 @@
 /**
  * Date: 4/3/14
  * Time: 1:28 PM
- * @author jack 
+ * @author jack
  */
 package blackjack
 

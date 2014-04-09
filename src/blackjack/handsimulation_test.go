@@ -1,10 +1,10 @@
 package blackjack
 
 import (
-	"testing"
-	"math/rand"
 	"gaming"
 	"math"
+	"math/rand"
+	"testing"
 )
 
 func TestHitOn12(t *testing.T) {
@@ -78,8 +78,6 @@ func TestHitOnSoft18(t *testing.T) {
 	go simulateHand(t, King, player_hand, true)
 	go simulateHand(t, Ace, player_hand, true)
 }
-
-
 
 func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBetterToHit bool) {
 	var hit_strategy PlayStrategy
