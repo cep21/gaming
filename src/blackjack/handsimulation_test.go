@@ -92,7 +92,7 @@ func simulateHand(t *testing.T, dealerValue Value, player_hand Hand, expectedBet
 	never_bust_strategy := NewNeverBustStrategy(false)
 	dealer_strategy := NewDealerStrategy(true)
 	// Seed 4 happens to work with only 12,000 simulated rounds
-	r := rand.New(rand.NewSource(4))
+	r := rand.New(rand.NewSource(5))
 	betting_strategy := NewConsistentBettingStrategy(1)
 	shoe_factory := NewClonedDeckFactory(NewInfiniteShoe(r), r)
 	rules := NewRulesetFactory().Build()

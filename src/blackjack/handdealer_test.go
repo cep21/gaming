@@ -8,49 +8,50 @@ package blackjack
 import (
 	"testing"
 	"gaming"
-	"gaming/bankroll"
 )
 
 func TestBasicHandDealer(t *testing.T) {
-	shoe := Decks((uint)(1))
-	strat := NewConsistentBettingStrategy(1)
-	bank := bankroll.NewMoneyHolder()
-	dealer := NewDealer()
-	dealer := NewBasicHandDealer()
-	err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
+	shoe := Decks(uint(1))
+	dealer := NewDealer(NewDealerStrategy(false), NewBasicHandDealer())
+	player := NewPlayer(NewConsistentBettingStrategy(1), NewAlwaysHitStrategy())
+	players := []Player{player}
+	err := dealer.HandDealer().DealHands(shoe, players, dealer)
 	if err != nil {
 		t.Fatal("Don't expect failed deals")
 	}
-	basicHandVerification(t, player_hands, dealer_hand, (uint)(1))
+	basicHandVerification(t, players, dealer)
 }
 
 func TestForcedHandsDealer(t *testing.T) {
-	shoe := Decks((uint)(1))
+
+	shoe := Decks(uint(1))
 	dealerUpCard := Ten
 	playerHand := NewHand(NewCard(gaming.Spade, Ten), NewCard(gaming.Spade, Ten))
-	strat := NewConsistentBettingStrategy(1)
-	bank := bankroll.NewMoneyHolder()
-	dealer := NewForceDealerPlayerHands(playerHand, dealerUpCard)
-	err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
+	dealer := NewDealer(NewDealerStrategy(false), NewForceDealerPlayerHands(playerHand, dealerUpCard))
+	player := NewPlayer(NewConsistentBettingStrategy(1), NewAlwaysHitStrategy())
+	players := []Player{player}
+	err := dealer.HandDealer().DealHands(shoe, players, dealer)
 	if err != nil {
 		t.Fatal("Don't expect failed deals")
 	}
-	basicHandVerification(t, player_hands, dealer_hand, (uint)(1))
+	basicHandVerification(t, players, dealer)
 
 	// Shouldn't be able to deal ten/ten/ten again on a one deck shoe
-	_, _, err = dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
+	err = dealer.HandDealer().DealHands(shoe, players, dealer)
 	if err == nil {
 		t.Error("I expected an error dealing this hand twice")
 	}
-
 }
 
-func basicHandVerification(t *testing.T, player_hands []Hand, dealer_hand Hand, expectedSize uint) {
-	if uint(len(player_hands)) != expectedSize {
-		t.Error("Unexpected number of hands")
+func basicHandVerification(t *testing.T, players []Player, dealer Dealer) {
+	for _, p := range players {
+		for _, h := range p.Hands() {
+			if h.Size() != uint(2) {
+				t.Error("Dealt hands should have two cards")
+			}
+		}
 	}
-	player_hands = append(player_hands, dealer_hand)
-	for _, h := range player_hands {
+	for _, h := range dealer.Hands() {
 		if h.Size() != uint(2) {
 			t.Error("Dealt hands should have two cards")
 		}

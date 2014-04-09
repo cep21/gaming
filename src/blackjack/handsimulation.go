@@ -79,80 +79,23 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 	return []Hand{playerHand}, nil
 }
 
-//
-//func SimulateSingleHand(shoeFactory ShoeFactory, dealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
+
+func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
 //	playerBankroll := bankroll.NewMoneyHolder()
 //	houseBankroll := bankroll.NewMoneyHolder()
-//	//units_to_bet := bettingStrategy.GetMoneyToBet()
-//	for i := uint(0); i < number_of_iterations; i++ {
-//		shoe := shoeFactory.CreateShoe()
-//		//bankroll.ChangeBankroll(-units_to_bet)
-//		player_hands, dealerHand, err := dealer.DealHands(shoe, []BettingStrategy{bettingStrategy}, []bankroll.MoneyHolder{playerBankroll})
-//		if err != nil {
-//			return 0, err
-//		}
-//		playerHand := player_hands[0]
-//		//playerHand := NewHand(player_hands[0], NewMoneyHolder(), 0)
-//		//playerBankroll.TransferMoneyTo(playerHand.MoneyInThisHand(), units_to_bet)
-//		if dealerHand.IsBlackjack() {
-//			if playerHand.IsBlackjack() {
-//				// Push the money back
-//				playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
-//				continue
-//			} else {
-//				playerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
-//				continue
-//			}
-//		} else if playerHand.IsBlackjack() {
-//			houseBankroll.TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll()*bankroll.Money(rules.BlackjackPayout()))
-//			playerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
-//			continue
-//		}
-//
-//		originalAllPlayerHands, err := PlayHand(playerHand, dealerHand, playerStrategy, rules, playerBankroll, houseBankroll, shoe)
-//		playerHand = nil
-//		if err != nil {
-//			return 0, err
-//		}
-//		nonBustPlayerHands := []Hand{}
-//		for _, hand := range originalAllPlayerHands {
-//			if hand.Bust() {
-//				hand.MoneyInThisHand().TransferMoneyTo(houseBankroll, hand.MoneyInThisHand().CurrentBankroll())
-//			} else {
-//				nonBustPlayerHands = append(nonBustPlayerHands, hand)
-//			}
-//		}
-//		if len(nonBustPlayerHands) == 0 {
-//			continue
-//		}
-//
-//		allDealerHands, err := PlayHand(dealerHand, nil, dealerStrategy, rules, nil, nil, shoe)
-//		if err != nil {
-//			return 0, err
-//		}
-//		if len(allDealerHands) != 1 || allDealerHands[0] != dealerHand {
-//			return 0, ERR_INVALID_DEALER_OPERATION
-//		}
-//
-//		for _, finalPlayerHand := range nonBustPlayerHands {
-//			if dealerHand.Bust() {
-//				houseBankroll.TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//				continue
-//			}
-//			//log.Printf("%s vs %s\n", player_hand, dealer_hand)
-//			if dealerHand.Score() > finalPlayerHand.Score() {
-//				// You loose, give it to the house
-//				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//			} else if dealerHand.Score() < finalPlayerHand.Score() {
-//				// You win.  Take some from the house
-//				houseBankroll.TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//			} else {
-//				// Push the money back
-//				finalPlayerHand.MoneyInThisHand().TransferMoneyTo(playerBankroll, finalPlayerHand.MoneyInThisHand().CurrentBankroll())
-//			}
-//		}
+//	units_to_bet := bettingStrategy.GetMoneyToBet()
+	table := NewTable(NewDealer(dealerStrategy, handDealer), shoeFactory, 1, rules)
+	player := NewPlayer(bettingStrategy, playerStrategy)
+	table.SetPlayer(player, 0)
+	for i := uint(0); i < number_of_iterations; i++ {
+		err := table.PlayRound()
+		if err != nil {
+			return 0, err
+		}
+	}
+	return float64(bankroll.Money(player.Bankroll().CurrentBankroll()) / bankroll.Money(number_of_iterations)), nil
+}
+
 //	}
 //	return float64(playerBankroll.CurrentBankroll())/float64(number_of_iterations), nil
 //}
