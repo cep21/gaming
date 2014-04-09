@@ -12,6 +12,30 @@ type BettingStrategy interface {
 	GetMoneyToBet() bankroll.Money
 }
 
+type Better interface {
+	Bankroll() bankroll.MoneyHolder
+	BettingStrategy() BettingStrategy
+}
+
+type betterImpl struct {
+	bankroll        bankroll.MoneyHolder
+	bettingStrategy BettingStrategy
+}
+
+func (better *betterImpl) Bankroll() bankroll.MoneyHolder {
+	return better.bankroll
+}
+func (better *betterImpl) BettingStrategy() BettingStrategy {
+	return better.bettingStrategy
+}
+
+func NewBetter(bankroll bankroll.MoneyHolder, bettingStrategy BettingStrategy) Better {
+	return &betterImpl{
+		bankroll: bankroll,
+		bettingStrategy: bettingStrategy,
+	}
+}
+
 type consistentBettingStrategy struct {
 	money bankroll.Money
 }

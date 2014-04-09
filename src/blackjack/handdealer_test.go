@@ -15,8 +15,9 @@ func TestBasicHandDealer(t *testing.T) {
 	shoe := Decks((uint)(1))
 	strat := NewConsistentBettingStrategy(1)
 	bank := bankroll.NewMoneyHolder()
+	dealer := NewDealer()
 	dealer := NewBasicHandDealer()
-	player_hands, dealer_hand, err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
+	err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
 	if err != nil {
 		t.Fatal("Don't expect failed deals")
 	}
@@ -30,7 +31,7 @@ func TestForcedHandsDealer(t *testing.T) {
 	strat := NewConsistentBettingStrategy(1)
 	bank := bankroll.NewMoneyHolder()
 	dealer := NewForceDealerPlayerHands(playerHand, dealerUpCard)
-	player_hands, dealer_hand, err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
+	err := dealer.DealHands(shoe, []BettingStrategy{strat}, []bankroll.MoneyHolder{bank})
 	if err != nil {
 		t.Fatal("Don't expect failed deals")
 	}

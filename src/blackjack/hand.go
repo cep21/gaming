@@ -25,6 +25,26 @@ type Hand interface {
 	Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand
 }
 
+type HandHolder interface {
+	Hands() []Hand
+	SetHands(hands []Hand)
+}
+
+type handHolderImpl struct {
+	hands []Hand
+}
+
+func NewHandHolder() HandHolder {
+	return &handHolderImpl{hands:nil}
+}
+
+func (holder* handHolderImpl) Hands() []Hand {
+	return holder.hands
+}
+func (holder* handHolderImpl) SetHands(hands []Hand) {
+	holder.hands = hands
+}
+
 type handImpl struct {
 	cards       []Card
 	aceCount    uint
