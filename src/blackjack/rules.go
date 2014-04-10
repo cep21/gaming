@@ -237,16 +237,3 @@ func (this *rulesetFactoryImpl) SurrenderOption(surrenderOption SurrenderOption)
 	this.surrenderOption = surrenderOption
 	return this
 }
-
-//func NewRuleset(softhit bool, doublesplit bool, resplitace bool, hardDoubleValues[]uint, softDoubleValues []uint, payout BlackjackPayout, penetration float64, can_double_after_split bool, can_split_aces bool, can_hit_split_aces bool) Rules {
-//	hardDoubles := make([]bool, 21)
-//	for _, v := range hardDoubleValues {
-//		hardDoubles[v] = true
-//	}
-//
-//	softDoubles := make([]bool, 21)
-//	for _, v := range softDoubleValues {
-//		softDoubles[v] = true
-//	}
-//	return &rulesImpl{softhit, doublesplit, resplitace, hardDoubleValues, hardDoubles, softDoubleValues, softDoubles, payout, penetration}
-//}

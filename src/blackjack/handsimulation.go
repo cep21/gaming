@@ -80,9 +80,6 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 }
 
 func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
-	//	playerBankroll := bankroll.NewMoneyHolder()
-	//	houseBankroll := bankroll.NewMoneyHolder()
-	//	units_to_bet := bettingStrategy.GetMoneyToBet()
 	table := NewTable(NewDealer(dealerStrategy, handDealer), shoeFactory, 1, rules)
 	player := NewPlayer(bettingStrategy, playerStrategy)
 	table.SetPlayer(player, 0)
@@ -94,7 +91,3 @@ func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerSt
 	}
 	return float64(bankroll.Money(player.Bankroll().CurrentBankroll()) / bankroll.Money(number_of_iterations)), nil
 }
-
-//	}
-//	return float64(playerBankroll.CurrentBankroll())/float64(number_of_iterations), nil
-//}
