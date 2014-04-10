@@ -15,7 +15,7 @@ var ERR_TRIED_TO_DOUBLE_BUT_NOT_ALLOWED = errors.New("Tried to double but double
 var ERR_TRIED_TO_SPLIT_BUT_NOT_ALLOWED = errors.New("Tried to split but split is not allowed")
 var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 
-func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStrategy, rules Rules, houseBankroll bankroll.MoneyHolder, shoe Shoe) ([]Hand, error) {
+func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStrategy, rules Rules, shoe Shoe) ([]Hand, error) {
 
 	if len(playerHand.Cards()) == 1 {
 		if playerHand.SplitNumber() == 0 {
@@ -42,8 +42,6 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 			if !rules.CanSurrender(playerHand) {
 				return nil, ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED
 			}
-			playerHand.MoneyInThisHand().TransferMoneyTo(bankrolledStrategy.Bankroll(), playerHand.MoneyInThisHand().CurrentBankroll()/2)
-			playerHand.MoneyInThisHand().TransferMoneyTo(houseBankroll, playerHand.MoneyInThisHand().CurrentBankroll())
 			break
 		} else if action == DOUBLE {
 			if !rules.CanDouble(playerHand) {
@@ -64,11 +62,11 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 			if err != nil {
 				return nil, err
 			}
-			hands1, err := PlayHand(hand1, dealerHand, bankrolledStrategy, rules, houseBankroll, shoe)
+			hands1, err := PlayHand(hand1, dealerHand, bankrolledStrategy, rules, shoe)
 			if err != nil {
 				return nil, err
 			}
-			hands2, err := PlayHand(hand2, dealerHand, bankrolledStrategy, rules, houseBankroll, shoe)
+			hands2, err := PlayHand(hand2, dealerHand, bankrolledStrategy, rules, shoe)
 			if err != nil {
 				return nil, err
 			}

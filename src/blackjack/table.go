@@ -2,6 +2,7 @@ package blackjack
 
 import (
 	"gaming/bankroll"
+	"fmt"
 )
 
 type Table interface {
@@ -60,7 +61,7 @@ func (table *tableImpl) RemovePlayer(spot uint) Player {
 func assertHandBankrollsAreEmpty(hands []Hand) {
 	for _, h := range hands {
 		if h.MoneyInThisHand().CurrentBankroll() != 0 {
-			panic("Logic error: Hands should be empty at the end")
+			panic(fmt.Sprintf("Logic error: Hands should be empty at the end %s with action %s bankroll %f", h, h.LastAction(), h.MoneyInThisHand().CurrentBankroll()))
 		}
 	}
 }
@@ -105,7 +106,7 @@ func (table *tableImpl) PlayRound() error {
 	for _, activePlayer := range activePlayers {
 		finalPlayerHands := []Hand{}
 		for _, playerHand := range activePlayer.Hands() {
-			thisHandsNewHands, err := PlayHand(playerHand, dealerHand, activePlayer, table.rules, table.dealer.Bankroll(), shoe)
+			thisHandsNewHands, err := PlayHand(playerHand, dealerHand, activePlayer, table.rules, shoe)
 			if err != nil {
 				return err
 			}
@@ -113,6 +114,9 @@ func (table *tableImpl) PlayRound() error {
 			for _, hand := range thisHandsNewHands {
 				if hand.Bust() {
 					hand.MoneyInThisHand().TransferMoneyTo(table.dealer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll())
+					//				} else if hand.LastAction() == SURRENDER {
+					//					hand.MoneyInThisHand().TransferMoneyTo(table.dealer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll() / 2.0)
+					//					hand.MoneyInThisHand().TransferMoneyTo(activePlayer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll())
 				} else {
 					finalPlayerHands = append(finalPlayerHands, hand)
 				}
@@ -121,7 +125,7 @@ func (table *tableImpl) PlayRound() error {
 		activePlayer.SetHands(finalPlayerHands)
 	}
 
-	allDealerHands, err := PlayHand(dealerHand, nil, table.dealer, table.rules, table.dealer.Bankroll(), shoe)
+	allDealerHands, err := PlayHand(dealerHand, nil, table.dealer, table.rules, shoe)
 	if err != nil {
 		return err
 	}
