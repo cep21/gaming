@@ -9,6 +9,7 @@ import (
 	"math"
 	//	"log"
 	"fmt"
+	"io"
 )
 
 type GameAction interface {
@@ -182,12 +183,94 @@ func NewDiscoveredStrategy(rules Rules, shoeFactory ShoeFactory, dealerStrategy 
 	}
 }
 
+func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
+	for dealerUpCardScore, _ := range this.hards[0] {
+		if dealerUpCardScore == 0 {
+			fmt.Fprintf(w, "%-15s", "")
+			continue
+		}
+		fmt.Fprintf(w, "%-15d", dealerUpCardScore)
+	}
+
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "Hard strategy table\n")
+	for playerHandValue, perScoreHards := range this.hards {
+		if playerHandValue < 5 {
+			// Lowest hard hand is 5 because we consider 4 (2/2) a split hand
+			continue
+		}
+		for dealerUpCardScore, perDealerCard := range perScoreHards {
+			if dealerUpCardScore == 0 {
+				fmt.Fprintf(w, "%-15d", playerHandValue)
+				continue
+			}
+			s := fmt.Sprintf("%s", perDealerCard)
+			fmt.Fprintf(w, "%-15s", s)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "Soft strategy table\n")
+	for playerHandValue, perScoreHards := range this.softs {
+		if playerHandValue < 13 {
+			// Lowest soft hand is 13 because we consider 12 (A/A) a split hand)
+			continue
+		}
+		for dealerUpCardScore, perDealerCard := range perScoreHards {
+			if dealerUpCardScore == 0 {
+				fmt.Fprintf(w, "%-15d", playerHandValue)
+				continue
+			}
+			s := fmt.Sprintf("%s", perDealerCard)
+			fmt.Fprintf(w, "%-15s", s)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "Splits strategy table\n")
+	for playerHandValue, perScoreHards := range this.splits {
+		if playerHandValue < 1 || playerHandValue % 2 != 0 {
+			continue
+		}
+		for dealerUpCardScore, perDealerCard := range perScoreHards {
+			if dealerUpCardScore == 0 {
+				s := fmt.Sprintf("%d/%d", playerHandValue/2, playerHandValue/2)
+				fmt.Fprintf(w, "%-15s", s)
+				continue
+			}
+			s := fmt.Sprintf("%s", perDealerCard)
+			fmt.Fprintf(w, "%-15s", s)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+}
+
 func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card, gameAction GameAction) {
 	if this.rules.CanSplit(currentHand) {
+		for _, v := range this.splits[currentHand.Score()][dealerUpCard.Score()] {
+			if v == gameAction {
+				// Already set
+				return
+			}
+		}
 		this.splits[currentHand.Score()][dealerUpCard.Score()] = append(this.splits[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	} else if currentHand.IsSoft() {
+		for _, v := range this.softs[currentHand.Score()][dealerUpCard.Score()] {
+			if v == gameAction {
+				// Already set
+				return
+			}
+		}
 		this.softs[currentHand.Score()][dealerUpCard.Score()] = append(this.softs[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	} else {
+		for _, v := range this.hards[currentHand.Score()][dealerUpCard.Score()] {
+			if v == gameAction {
+				// Already set
+				return
+			}
+		}
 		this.hards[currentHand.Score()][dealerUpCard.Score()] = append(this.hards[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	}
 }
@@ -242,6 +325,9 @@ func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) 
 	learnedAction, err := this.LearnAction(currentHand, dealerUpCard)
 	if err != nil {
 		panic(fmt.Sprintf("Logic error.  We shouldn't get errors here of %s", err))
+	}
+	if !this.rules.AllowsAction(learnedAction, currentHand) {
+		panic(fmt.Sprintf("I am telling you to take an action you're not allowed to take %s with %s!", learnedAction, currentHand))
 	}
 	return learnedAction
 }

@@ -132,6 +132,9 @@ func (this *rulesImpl) CanHit(hand Hand) bool {
 }
 
 func (this *rulesImpl) CanDouble(hand Hand) bool {
+	if len(hand.Cards()) !=2 {
+		return false;
+	}
 	if hand.IsSplitHand() {
 		if !this.doubleAfterSplit {
 			return false
