@@ -80,7 +80,7 @@ func (table *tableImpl) PlayRound() error {
 		// TODO(insurance)
 	}
 	for _, activePlayer := range activePlayers {
-		defer assertHandBankrollsAreEmpty(activePlayer.Hands())
+//		defer assertHandBankrollsAreEmpty(activePlayer.Hands())
 		survivingPlayerHands := []Hand{}
 		for _, playerHand := range activePlayer.Hands() {
 			if playerHand.IsBlackjack() {
@@ -114,9 +114,12 @@ func (table *tableImpl) PlayRound() error {
 			for _, hand := range thisHandsNewHands {
 				if hand.Bust() {
 					hand.MoneyInThisHand().TransferMoneyTo(table.dealer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll())
-					//				} else if hand.LastAction() == SURRENDER {
-					//					hand.MoneyInThisHand().TransferMoneyTo(table.dealer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll() / 2.0)
-					//					hand.MoneyInThisHand().TransferMoneyTo(activePlayer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll())
+				} else if hand.LastAction() == SURRENDER {
+					hand.MoneyInThisHand().TransferMoneyTo(table.dealer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll() / 2.0)
+					hand.MoneyInThisHand().TransferMoneyTo(activePlayer.Bankroll(), hand.MoneyInThisHand().CurrentBankroll())
+					if hand.MoneyInThisHand().CurrentBankroll() != 0 {
+						fmt.Printf("Total money in this hand %f\n", hand.MoneyInThisHand().CurrentBankroll())
+					}
 				} else {
 					finalPlayerHands = append(finalPlayerHands, hand)
 				}

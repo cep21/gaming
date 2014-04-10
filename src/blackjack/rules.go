@@ -38,6 +38,7 @@ type Rules interface {
 	CanSplit(hand Hand) bool
 	CanHit(hand Hand) bool
 	CanSurrender(hand Hand) bool
+	AllowsAction(GameAction, Hand) bool
 	BlackjackPayout() BlackjackPayout
 	ReshufflePenetration() float64
 }
@@ -60,6 +61,23 @@ type rulesImpl struct {
 func (this *rulesImpl) DealerHitOnSoft17() bool {
 	return this.hitSoft17
 }
+
+func (this *rulesImpl) AllowsAction(action GameAction, playerHand Hand) bool {
+	if action == HIT {
+		return this.CanHit(playerHand)
+	} else if action == STAND {
+		return true
+	} else if action == DOUBLE {
+		return this.CanDouble(playerHand)
+	} else if action == SPLIT {
+		return this.CanSplit(playerHand)
+	} else if action == SURRENDER {
+		return this.CanSurrender(playerHand)
+	} else {
+		panic("Unknown action!")
+	}
+}
+
 
 func (this *rulesImpl) DoubleAfterSplit() bool {
 	return this.doubleAfterSplit

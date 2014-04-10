@@ -5,13 +5,12 @@
  */
 package main
 
-import "fmt"
-import "blackjack"
+//import "blackjack"
 
-func main() {
-	numberOfIterations := 10000
-	rules := blackjack.NewRulesetFactory().Build()
-	strategy := NewDiscoveredStrategy(rules)
+func main2() {
+//	numberOfIterations := 10000
+//	rules := blackjack.NewRulesetFactory().Build()
+//	strategy := NewDiscoveredStrategy(rules)
 }
 
 

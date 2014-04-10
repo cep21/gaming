@@ -8,6 +8,7 @@ package blackjack
 import (
 	"math"
 	//	"log"
+	"fmt"
 )
 
 type GameAction interface {
@@ -152,17 +153,20 @@ type DiscoveredStrategy struct {
 	dealerStrategy  PlayStrategy
 	bettingStrategy BettingStrategy
 	iterations      uint
-	hards           [][]GameAction
-	splits          [][]GameAction
-	softs           [][]GameAction
+	hards           [][][]GameAction
+	splits          [][][]GameAction
+	softs           [][][]GameAction
 }
 
 func NewDiscoveredStrategy(rules Rules, shoeFactory ShoeFactory, dealerStrategy PlayStrategy, iterations uint) *DiscoveredStrategy {
-	resets := make([][][]GameAction, 3)
+	resets := make([][][][]GameAction, 3)
 	for i := 0; i < len(resets); i++ {
-		resets[i] = make([][]GameAction, 21)
+		resets[i] = make([][][]GameAction, 21)
 		for scores := 0; scores < len(resets[i]); scores++ {
-			resets[i][scores] = make([]GameAction, 11)
+			resets[i][scores] = make([][]GameAction, 11)
+			for k :=0;k<len(resets[i][scores]);k++ {
+				resets[i][scores][k] = []GameAction{}
+			}
 		}
 	}
 
@@ -180,23 +184,26 @@ func NewDiscoveredStrategy(rules Rules, shoeFactory ShoeFactory, dealerStrategy 
 
 func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card, gameAction GameAction) {
 	if this.rules.CanSplit(currentHand) {
-		this.splits[currentHand.Score()][dealerUpCard.Score()] = gameAction
+		this.splits[currentHand.Score()][dealerUpCard.Score()] = append(this.splits[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	} else if currentHand.IsSoft() {
-		this.softs[currentHand.Score()][dealerUpCard.Score()] = gameAction
+		this.softs[currentHand.Score()][dealerUpCard.Score()] = append(this.softs[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	} else {
-		this.hards[currentHand.Score()][dealerUpCard.Score()] = gameAction
+		this.hards[currentHand.Score()][dealerUpCard.Score()] = append(this.hards[currentHand.Score()][dealerUpCard.Score()], gameAction)
 	}
 }
 
 func (this *DiscoveredStrategy) Clone() *DiscoveredStrategy {
-	thisResets := [][][]GameAction{this.hards, this.splits, this.softs}
-	resets := make([][][]GameAction, 3)
+	thisResets := [][][][]GameAction{this.hards, this.splits, this.softs}
+	resets := make([][][][]GameAction, 3)
 	for i := 0; i < len(resets); i++ {
-		resets[i] = make([][]GameAction, 21)
+		resets[i] = make([][][]GameAction, 21)
 		for scores := 0; scores < len(resets[i]); scores++ {
-			resets[i][scores] = make([]GameAction, 11)
+			resets[i][scores] = make([][]GameAction, 11)
 			for j := 0; j < len(resets[i][scores]); j++ {
-				resets[i][scores][j] = thisResets[i][scores][j]
+				resets[i][scores][j] = make([]GameAction, len(thisResets[i][scores][j]))
+				for k :=0;k<len(resets[i][scores][j]);k++ {
+					resets[i][scores][j][k] = thisResets[i][scores][j][k]
+				}
 			}
 		}
 	}
@@ -219,20 +226,22 @@ func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) 
 	if currentHand.Score() >= 21 {
 		return STAND
 	}
-	var action GameAction
+	var actions []GameAction
 	if this.rules.CanSplit(currentHand) {
-		action = this.splits[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.splits[currentHand.Score()][dealerUpCard.Score()]
 	} else if currentHand.IsSoft() {
-		action = this.softs[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
 	} else {
-		action = this.hards[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.hards[currentHand.Score()][dealerUpCard.Score()]
 	}
-	if action != nil {
-		return action
+	for _, action := range actions {
+		if this.rules.AllowsAction(action, currentHand) {
+			return action
+		}
 	}
 	learnedAction, err := this.LearnAction(currentHand, dealerUpCard)
 	if err != nil {
-		panic("Logic error.  We shouldn't get errors here")
+		panic(fmt.Sprintf("Logic error.  We shouldn't get errors here of %s", err))
 	}
 	return learnedAction
 }
@@ -241,15 +250,20 @@ func (this *DiscoveredStrategy) nonRecursiveTakeAction(currentHand Hand, dealerU
 	if currentHand.Score() >= 21 {
 		return STAND
 	}
-	var action GameAction
+	var actions []GameAction
 	if this.rules.CanSplit(currentHand) {
-		action = this.splits[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.splits[currentHand.Score()][dealerUpCard.Score()]
 	} else if currentHand.IsSoft() {
-		action = this.softs[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
 	} else {
-		action = this.hards[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.hards[currentHand.Score()][dealerUpCard.Score()]
 	}
-	return action
+	for _, action := range actions {
+		if this.rules.AllowsAction(action, currentHand) {
+			return action
+		}
+	}
+	return nil
 }
 
 func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card) (GameAction, error) {

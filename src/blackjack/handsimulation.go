@@ -8,6 +8,7 @@ package blackjack
 import (
 	"errors"
 	"gaming/bankroll"
+	"fmt"
 )
 
 var ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED = errors.New("Tried to surrender but surrender is not allowed")
@@ -40,6 +41,7 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 		playerHand.SetLastAction(action)
 		if action == SURRENDER {
 			if !rules.CanSurrender(playerHand) {
+				fmt.Printf("Tried to surrender a %s with %s\n", playerHand, playerHand.Cards())
 				return nil, ERR_TRIED_TO_SURRENDER_BUT_NOT_ALLOWED
 			}
 			break
