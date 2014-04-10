@@ -5,7 +5,10 @@
  */
 package blackjack
 
-import "math"
+import (
+	"math"
+	//	"log"
+)
 
 type GameAction interface {
 	Name() string
@@ -144,28 +147,31 @@ func NewHitOnAScoreStrategy(soft_score_to_hit uint, hard_score_to_hit uint) Play
 }
 
 type DiscoveredStrategy struct {
-	rules  Rules
-	shoeFactory ShoeFactory
-	handDealer HandDealer
-	dealerStrategy PlayStrategy
+	rules           Rules
+	shoeFactory     ShoeFactory
+	dealerStrategy  PlayStrategy
 	bettingStrategy BettingStrategy
-	iterations uint
-	hards  [][]GameAction
-	splits [][]GameAction
-	softs  [][]GameAction
+	iterations      uint
+	hards           [][]GameAction
+	splits          [][]GameAction
+	softs           [][]GameAction
 }
 
-func NewDiscoveredStrategy(rules Rules) *DiscoveredStrategy {
+func NewDiscoveredStrategy(rules Rules, shoeFactory ShoeFactory, dealerStrategy PlayStrategy, iterations uint) *DiscoveredStrategy {
 	resets := make([][][]GameAction, 3)
-	for i :=0;i<len(resets);i++ {
+	for i := 0; i < len(resets); i++ {
 		resets[i] = make([][]GameAction, 21)
-		for scores := 0; scores < resets[i]; scores++ {
+		for scores := 0; scores < len(resets[i]); scores++ {
 			resets[i][scores] = make([]GameAction, 11)
 		}
 	}
 
 	return &DiscoveredStrategy{
 		rules: rules,
+		shoeFactory: shoeFactory,
+		dealerStrategy: dealerStrategy,
+		bettingStrategy: NewConsistentBettingStrategy(1),
+		iterations: iterations,
 		hards: resets[0],
 		splits: resets[1],
 		softs: resets[2],
@@ -182,14 +188,14 @@ func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card,
 	}
 }
 
-func (this *DiscoveredStrategy) Clone() DiscoveredStrategy {
+func (this *DiscoveredStrategy) Clone() *DiscoveredStrategy {
 	thisResets := [][][]GameAction{this.hards, this.splits, this.softs}
 	resets := make([][][]GameAction, 3)
-	for i :=0;i<len(resets);i++ {
+	for i := 0; i < len(resets); i++ {
 		resets[i] = make([][]GameAction, 21)
-		for scores := 0; scores < resets[i]; scores++ {
+		for scores := 0; scores < len(resets[i]); scores++ {
 			resets[i][scores] = make([]GameAction, 11)
-			for j :=0;j<len(resets[i][scores]);j++ {
+			for j := 0; j < len(resets[i][scores]); j++ {
 				resets[i][scores][j] = thisResets[i][scores][j]
 			}
 		}
@@ -197,6 +203,10 @@ func (this *DiscoveredStrategy) Clone() DiscoveredStrategy {
 
 	return &DiscoveredStrategy{
 		rules: this.rules,
+		shoeFactory: this.shoeFactory,
+		dealerStrategy: this.dealerStrategy,
+		bettingStrategy: this.bettingStrategy,
+		iterations: this.iterations,
 		hards: resets[0],
 		splits: resets[1],
 		softs: resets[2],
@@ -206,66 +216,129 @@ func (this *DiscoveredStrategy) Clone() DiscoveredStrategy {
 
 
 func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) GameAction {
-	if currentHand.Score() >= 21  {
+	if currentHand.Score() >= 21 {
 		return STAND
 	}
+	var action GameAction
 	if this.rules.CanSplit(currentHand) {
-		return this.splits[currentHand.Score()][dealerUpCard.Score()]
+		action = this.splits[currentHand.Score()][dealerUpCard.Score()]
 	} else if currentHand.IsSoft() {
-		return this.softs[currentHand.Score()][dealerUpCard.Score()]
+		action = this.softs[currentHand.Score()][dealerUpCard.Score()]
 	} else {
-		return this.hards[currentHand.Score()][dealerUpCard.Score()]
+		action = this.hards[currentHand.Score()][dealerUpCard.Score()]
 	}
+	if action != nil {
+		return action
+	}
+	learnedAction, err := this.LearnAction(currentHand, dealerUpCard)
+	if err != nil {
+		panic("Logic error.  We shouldn't get errors here")
+	}
+	return learnedAction
+}
+
+func (this *DiscoveredStrategy) nonRecursiveTakeAction(currentHand Hand, dealerUpCard Card) GameAction {
+	if currentHand.Score() >= 21 {
+		return STAND
+	}
+	var action GameAction
+	if this.rules.CanSplit(currentHand) {
+		action = this.splits[currentHand.Score()][dealerUpCard.Score()]
+	} else if currentHand.IsSoft() {
+		action = this.softs[currentHand.Score()][dealerUpCard.Score()]
+	} else {
+		action = this.hards[currentHand.Score()][dealerUpCard.Score()]
+	}
+	return action
 }
 
 func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card) (GameAction, error) {
 	var err error
-	splitWinning := math.MinInt64
-	doubleWinning := math.MinInt64
-	hitWinning := math.MinInt64
-	surrenderWinning := math.MinInt64
-	standWinning := math.MinInt64
+	splitWinning := float64(math.MinInt64)
+	doubleWinning := float64(math.MinInt64)
+	hitWinning := float64(math.MinInt64)
+	surrenderWinning := float64(math.MinInt64)
+	standWinning := float64(math.MinInt64)
+	var discoveredSplitTable *DiscoveredStrategy
+	var discoveredDoubleTable *DiscoveredStrategy
+	var discoveredSurrenderTable *DiscoveredStrategy
+	var discoveredHitTable *DiscoveredStrategy
+	var discoveredStandTable *DiscoveredStrategy
 
-	currentAction := this.TakeAction(currentHand, dealerUpCard)
+	currentAction := this.nonRecursiveTakeAction(currentHand, dealerUpCard)
 	if currentAction != nil {
-		return currentAction
+		return currentAction, nil
 	}
+	handDealer := NewForceDealerPlayerHands(currentHand, dealerUpCard.BlackjackValue())
 
-	//func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
 	if this.rules.CanSplit(currentHand) {
-		splitDiscoveredStrategy := this.Clone()
-		splitDiscoveredStrategy.SetStrategy(currentHand, dealerUpCard, SPLIT)
-		splitWinning, err = SimulateSingleHand(this.shoeFactory, this.handDealer, this.dealerStrategy, splitDiscoveredStrategy, this.bettingStrategy, this.iterations, this.rules)
+		discoveredSplitTable = this.Clone()
+		discoveredSplitTable.SetStrategy(currentHand, dealerUpCard, SPLIT)
+		splitWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredSplitTable, this.bettingStrategy, this.iterations, this.rules)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if this.rules.CanDouble(currentHand) {
-		splitDiscoveredStrategy := this.Clone()
-		splitDiscoveredStrategy.SetStrategy(currentHand, dealerUpCard, DOUBLE)
-		doubleWinning, err = SimulateSingleHand(this.shoeFactory, this.handDealer, this.dealerStrategy, splitDiscoveredStrategy, this.bettingStrategy, this.iterations, this.rules)
+		discoveredDoubleTable = this.Clone()
+		discoveredDoubleTable.SetStrategy(currentHand, dealerUpCard, DOUBLE)
+		doubleWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredDoubleTable, this.bettingStrategy, this.iterations, this.rules)
 		if err != nil {
 			return nil, err
 		}
 	}
 	if this.rules.CanSurrender(currentHand) {
-		splitDiscoveredStrategy := this.Clone()
-		splitDiscoveredStrategy.SetStrategy(currentHand, dealerUpCard, SURRENDER)
-		surrenderWinning, err = SimulateSingleHand(this.shoeFactory, this.handDealer, this.dealerStrategy, splitDiscoveredStrategy, this.bettingStrategy, this.iterations, this.rules)
+		discoveredSurrenderTable = this.Clone()
+		discoveredSurrenderTable.SetStrategy(currentHand, dealerUpCard, SURRENDER)
+		surrenderWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredSurrenderTable, this.bettingStrategy, this.iterations, this.rules)
 		if err != nil {
 			return nil, err
 		}
 	}
-	splitDiscoveredStrategy := this.Clone()
-	splitDiscoveredStrategy.SetStrategy(currentHand, dealerUpCard, HIT)
-	hitWinning, err = SimulateSingleHand(this.shoeFactory, this.handDealer, this.dealerStrategy, splitDiscoveredStrategy, this.bettingStrategy, this.iterations, this.rules)
+	discoveredHitTable = this.Clone()
+	discoveredHitTable.SetStrategy(currentHand, dealerUpCard, HIT)
+	hitWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredHitTable, this.bettingStrategy, this.iterations, this.rules)
 	if err != nil {
 		return nil, err
 	}
-	splitDiscoveredStrategy := this.Clone()
-	splitDiscoveredStrategy.SetStrategy(currentHand, dealerUpCard, STAND)
-	standWinning, err = SimulateSingleHand(this.shoeFactory, this.handDealer, this.dealerStrategy, splitDiscoveredStrategy, this.bettingStrategy, this.iterations, this.rules)
+	discoveredStandTable = this.Clone()
+	discoveredStandTable.SetStrategy(currentHand, dealerUpCard, STAND)
+	standWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredStandTable, this.bettingStrategy, this.iterations, this.rules)
 	if err != nil {
 		return nil, err
 	}
+
+	bestStrategy := STAND
+	bestScore := standWinning
+	if bestScore < hitWinning {
+		bestStrategy = HIT
+		bestScore = hitWinning
+		this.hards = discoveredHitTable.hards
+		this.softs = discoveredHitTable.softs
+		this.splits = discoveredHitTable.splits
+	}
+	if bestScore < surrenderWinning {
+		bestStrategy = SURRENDER
+		bestScore = surrenderWinning
+		this.hards = discoveredSurrenderTable.hards
+		this.softs = discoveredSurrenderTable.softs
+		this.splits = discoveredSurrenderTable.splits
+	}
+	if bestScore < doubleWinning {
+		bestStrategy = DOUBLE
+		bestScore = doubleWinning
+		this.hards = discoveredDoubleTable.hards
+		this.softs = discoveredDoubleTable.softs
+		this.splits = discoveredDoubleTable.splits
+	}
+	if bestScore < splitWinning {
+		bestStrategy = SPLIT
+		bestScore = splitWinning
+		this.hards = discoveredSplitTable.hards
+		this.softs = discoveredSplitTable.softs
+		this.splits = discoveredSplitTable.splits
+	}
+	//log.Printf("Best for %s vs %s is %s\n", currentHand, dealerUpCard, bestStrategy)
+	this.SetStrategy(currentHand, dealerUpCard, bestStrategy)
+	return bestStrategy, nil
 }

@@ -17,6 +17,18 @@ var ERR_INVALID_DEALER_OPERATION = errors.New("Invalid dealer operations")
 
 func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStrategy, rules Rules, houseBankroll bankroll.MoneyHolder, shoe Shoe) ([]Hand, error) {
 
+	if len(playerHand.Cards()) == 1 {
+		if playerHand.SplitNumber() == 0 {
+			panic("Logic error: Should be a split hand if cards == 1")
+		}
+		// Force the first card
+		card, err := shoe.Pop()
+		if err != nil {
+			return nil, err
+		}
+		playerHand.Push(card)
+		// TODO: Verify resplits/rehits if aces/etc
+	}
 	for {
 		var action GameAction
 		if dealerHand != nil {
@@ -80,14 +92,17 @@ func PlayHand(playerHand Hand, dealerHand Hand, bankrolledStrategy BankrolledStr
 }
 
 func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerStrategy PlayStrategy, playerStrategy PlayStrategy, bettingStrategy BettingStrategy, number_of_iterations uint, rules Rules) (float64, error) {
-	table := NewTable(NewDealer(dealerStrategy, handDealer), shoeFactory, 1, rules)
+	table := NewTable(NewDealer(dealerStrategy, handDealer), shoeFactory, uint(1), rules)
 	player := NewPlayer(bettingStrategy, playerStrategy)
-	table.SetPlayer(player, 0)
+	table.SetPlayer(player, uint(0))
 	for i := uint(0); i < number_of_iterations; i++ {
 		err := table.PlayRound()
 		if err != nil {
 			return 0, err
 		}
+	}
+	if player.Bankroll().CurrentBankroll()+table.Dealer().Bankroll().CurrentBankroll() != 0 {
+		panic("Logic error: Bankrolls should even out")
 	}
 	return float64(bankroll.Money(player.Bankroll().CurrentBankroll()) / bankroll.Money(number_of_iterations)), nil
 }

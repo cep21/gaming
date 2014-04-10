@@ -75,11 +75,9 @@ func (this *handImpl) LastAction() GameAction {
 }
 
 func (this *handImpl) SplitHand(bankrollToDrawFrom bankroll.MoneyHolder) (Hand, Hand, error) {
-	newBankroll := bankroll.NewMoneyHolder()
-	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
-	h1 := NewHand(this.cards[0])
-	h1.MoneyInThisHand()
-	h2 := NewHand(this.cards[1])
+	h1 := NewSplitHand(this.SplitNumber()+1, this.cards[0])
+	bankrollToDrawFrom.TransferMoneyTo(h1.MoneyInThisHand(), this.MoneyInThisHand().CurrentBankroll())
+	h2 := NewSplitHand(this.SplitNumber()+1, this.cards[1])
 	this.MoneyInThisHand().TransferMoneyTo(h2.MoneyInThisHand(), this.MoneyInThisHand().CurrentBankroll())
 	return h1, h2, nil
 }
@@ -161,8 +159,13 @@ func (this *handImpl) Push(c Card) {
 }
 
 func NewHand(cards ...Card) Hand {
+	return NewSplitHand(0, cards...)
+}
+
+func NewSplitHand(splitNumber uint, cards ...Card) Hand {
 	h := &handImpl{
 		money: bankroll.NewMoneyHolder(),
+		splitNumber: splitNumber,
 	}
 	for _, c := range cards {
 		h.Push(c)

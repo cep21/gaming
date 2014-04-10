@@ -1,6 +1,8 @@
 package blackjack
 
-import "gaming/bankroll"
+import (
+	"gaming/bankroll"
+)
 
 type Table interface {
 	Spots() uint
