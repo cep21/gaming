@@ -43,18 +43,24 @@ func main() {
 
 	dealerStrategy := blackjack.NewDealerStrategy(rules.DealerHitOnSoft17())
 	strat := blackjack.NewDiscoveredStrategy(rules, shoeFactory, dealerStrategy, *iterations)
-	for isSplit := 0 ;isSplit < 2; isSplit++ {
-		for isSoft := 0; isSoft < 2; isSoft ++ {
-			for totalValue := uint(21) ; totalValue > uint(0); totalValue-- {
-				for _, cardOne := range blackjack.Values() {
-					for _, cardTwo := range blackjack.Values() {
-						for _, dealerUpCard := range blackjack.Values() {
-							playerHand := blackjack.NewHand(blackjack.NewCard(gaming.Spade, cardOne), blackjack.NewCard(gaming.Spade, cardTwo))
-							dealerCard := blackjack.NewCard(gaming.Heart, dealerUpCard)
-							if playerHand.Score() == totalValue && playerHand.IsSoft() == (isSoft == 1) && rules.CanSplit(playerHand) == (isSplit == 1) {
-								// Learn higher down to lower
-								strat.TakeAction(playerHand, dealerCard)
-								strat.PrintStrategy(os.Stdout)
+	for hasThirdCard := 0; hasThirdCard<2;hasThirdCard++ {
+		// hasThirdCard takes care of situations where you can no longer double/surrender
+		for isSplit := 0 ;isSplit < 2; isSplit++ {
+			for isSoft := 0; isSoft < 2; isSoft ++ {
+				for totalValue := uint(21) ; totalValue > uint(0); totalValue-- {
+					for _, cardOne := range blackjack.Values() {
+						for _, cardTwo := range blackjack.Values() {
+							for _, dealerUpCard := range blackjack.Values() {
+								playerHand := blackjack.NewHand(blackjack.NewCard(gaming.Spade, cardOne), blackjack.NewCard(gaming.Spade, cardTwo))
+								if hasThirdCard != 0 {
+									playerHand.Push(blackjack.NewCard(gaming.Club, blackjack.Two))
+								}
+								dealerCard := blackjack.NewCard(gaming.Heart, dealerUpCard)
+								if playerHand.Score() == totalValue && playerHand.IsSoft() == (isSoft == 1) && rules.CanSplit(playerHand) == (isSplit == 1) {
+									// Learn higher down to lower
+									strat.TakeAction(playerHand, dealerCard)
+									strat.PrintStrategy(os.Stdout)
+								}
 							}
 						}
 					}

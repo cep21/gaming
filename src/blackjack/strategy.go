@@ -230,13 +230,13 @@ func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
 
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Splits strategy table\n")
-	for playerHandValue, perScoreHards := range this.splits {
-		if playerHandValue < 1 || playerHandValue % 2 != 0 {
+	for playerSplitValue, perScoreHards := range this.splits {
+		if playerSplitValue > 11 || playerSplitValue == 0 {
 			continue
 		}
 		for dealerUpCardScore, perDealerCard := range perScoreHards {
 			if dealerUpCardScore == 0 {
-				s := fmt.Sprintf("%d/%d", playerHandValue/2, playerHandValue/2)
+				s := fmt.Sprintf("%d/%d", playerSplitValue,playerSplitValue)
 				fmt.Fprintf(w, "%-15s", s)
 				continue
 			}
@@ -249,13 +249,13 @@ func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
 
 func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card, gameAction GameAction) {
 	if this.rules.CanSplit(currentHand) {
-		for _, v := range this.splits[currentHand.Score()][dealerUpCard.Score()] {
+		for _, v := range this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()] {
 			if v == gameAction {
 				// Already set
 				return
 			}
 		}
-		this.splits[currentHand.Score()][dealerUpCard.Score()] = append(this.splits[currentHand.Score()][dealerUpCard.Score()], gameAction)
+		this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()] = append(this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()], gameAction)
 	} else if currentHand.IsSoft() {
 		for _, v := range this.softs[currentHand.Score()][dealerUpCard.Score()] {
 			if v == gameAction {
@@ -311,7 +311,7 @@ func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) 
 	}
 	var actions []GameAction
 	if this.rules.CanSplit(currentHand) {
-		actions = this.splits[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()]
 	} else if currentHand.IsSoft() {
 		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
 	} else {
@@ -338,7 +338,7 @@ func (this *DiscoveredStrategy) nonRecursiveTakeAction(currentHand Hand, dealerU
 	}
 	var actions []GameAction
 	if this.rules.CanSplit(currentHand) {
-		actions = this.splits[currentHand.Score()][dealerUpCard.Score()]
+		actions = this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()]
 	} else if currentHand.IsSoft() {
 		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
 	} else {
