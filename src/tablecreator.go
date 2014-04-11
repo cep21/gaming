@@ -38,7 +38,7 @@ func main() {
 	if *decks == 0 {
 		shoeFactory = blackjack.NewClonedDeckFactory(blackjack.NewInfiniteShoe(r), r)
 	} else {
-		shoeFactory = blackjack.NewClonedDeckFactory(blackjack.Decks(*decks), r)
+		shoeFactory = blackjack.NewClonedDeckFactory(blackjack.NewRandomPickShoe(r, *decks), r)
 	}
 
 	dealerStrategy := blackjack.NewDealerStrategy(rules.DealerHitOnSoft17())
@@ -57,6 +57,9 @@ func main() {
 								}
 								dealerCard := blackjack.NewCard(gaming.Heart, dealerUpCard)
 								if playerHand.Score() == totalValue && playerHand.IsSoft() == (isSoft == 1) && rules.CanSplit(playerHand) == (isSplit == 1) {
+									if strat.NonRecursiveTakeAction(playerHand, dealerCard) != nil {
+										continue
+									}
 									// Learn higher down to lower
 									strat.TakeAction(playerHand, dealerCard)
 									strat.PrintStrategy(os.Stdout)

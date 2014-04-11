@@ -15,11 +15,13 @@ import (
 type GameAction interface {
 	Name() string
 	Symbol() rune
+	Index() int
 }
 
 type gameActionImpl struct {
 	name   string
 	symbol rune
+	index  int
 }
 
 func (this *gameActionImpl) Name() string {
@@ -34,11 +36,153 @@ func (this *gameActionImpl) String() string {
 	return this.Name()
 }
 
-var HIT = &gameActionImpl{"hit", 'H'}
-var STAND = &gameActionImpl{"stand", 'S'}
-var DOUBLE = &gameActionImpl{"double", 'D'}
-var SPLIT = &gameActionImpl{"split", 'P'}
-var SURRENDER = &gameActionImpl{"surrender", 'U'}
+func (this *gameActionImpl) Index() int {
+	return this.index
+}
+
+var HIT = &gameActionImpl{"hit", 'H', 0}
+var STAND = &gameActionImpl{"stand", 'S', 1}
+var DOUBLE = &gameActionImpl{"double", 'D', 2}
+var SPLIT = &gameActionImpl{"split", 'P', 3}
+var SURRENDER = &gameActionImpl{"surrender", 'U', 4}
+
+type strategyTableAction interface {
+	Name() string
+	ShortName() string
+	Index() int
+	GameAction(rules Rules, hand Hand) GameAction
+	Combine(GameAction) strategyTableAction
+}
+
+type strategyTableActionImpl struct {
+	name      string
+	shortName string
+	index     int
+}
+
+var stratHit = &strategyTableActionImpl{"hit", "H", 0}
+var stratStand = &strategyTableActionImpl{"stand", "S", 1}
+var stratSplit = &strategyTableActionImpl{"split", "P", 2}
+var stratDoubleUnknown = &strategyTableActionImpl{"double", "D", 3}
+var stratDoubleHit = &strategyTableActionImpl{"double/hit", "Dh", 4}
+var stratDoubleStand = &strategyTableActionImpl{"double/stand", "Ds", 5}
+var stratSurrenderUnknown = &strategyTableActionImpl{"sur", "U", 6}
+var stratSurrenderStand = &strategyTableActionImpl{"sur/stand", "Us", 7}
+var stratSurrenderHit = &strategyTableActionImpl{"sur/hit", "Uh", 8}
+
+func combineTableAction(stratAction strategyTableAction, gameAction GameAction) strategyTableAction {
+	if stratAction == nil {
+		return getStrategyTableAction(gameAction)
+	} else {
+		return stratAction.Combine(gameAction)
+	}
+}
+
+func getStrategyTableAction(gameAction GameAction) strategyTableAction {
+	if gameAction == HIT {
+		return stratHit
+	} else if gameAction == STAND {
+		return stratStand
+	} else if gameAction == SURRENDER {
+		return stratSurrenderUnknown
+	} else if gameAction == DOUBLE {
+		return stratDoubleUnknown
+	} else if gameAction == SPLIT {
+		return stratSplit
+	}
+	panic("Unknown game action!")
+}
+
+func (this *strategyTableActionImpl) Name() string {
+	return this.name
+}
+
+func (this *strategyTableActionImpl) ShortName() string {
+	return this.shortName
+}
+
+func (this *strategyTableActionImpl) String() string {
+	return this.Name()
+}
+
+func (this *strategyTableActionImpl) Index() int {
+	return this.index
+}
+
+func (this *strategyTableActionImpl) Combine(gameAction GameAction) strategyTableAction {
+	switch this.ShortName(){
+	case "D":
+		if gameAction == HIT {
+			return stratDoubleHit
+		} else if gameAction == STAND {
+			return stratDoubleStand
+		}
+		break
+	case "U":
+		if gameAction == HIT {
+			return stratSurrenderHit
+		} else if gameAction == STAND {
+			return stratSurrenderStand
+		}
+		break
+	}
+
+	panic(fmt.Sprintf("Unknown how to combine these two %s and %s!!!??", *this, gameAction))
+}
+
+func (this *strategyTableActionImpl) GameAction(rules Rules, hand Hand) GameAction {
+	switch this.ShortName() {
+	case "H":
+		return HIT
+	case "S":
+		return STAND
+	case "P":
+		if rules.CanSplit(hand) {
+			return SPLIT
+		} else {
+			panic("This should never happen!")
+		}
+	case "D":
+		if rules.CanDouble(hand) {
+			return DOUBLE
+		} else {
+			return nil
+		}
+	case "Dh":
+		if rules.CanDouble(hand) {
+			return DOUBLE
+		} else {
+			return HIT
+		}
+	case "Ds":
+		if rules.CanDouble(hand) {
+			return DOUBLE
+		} else {
+			return STAND
+		}
+	case "U":
+		if rules.CanSurrender(hand) {
+			return SURRENDER
+		} else {
+			return nil
+		}
+	case "Us":
+		if rules.CanSurrender(hand) {
+			return SURRENDER
+		} else {
+			return STAND
+		}
+	case "Uh":
+		if rules.CanSurrender(hand) {
+			return SURRENDER
+		} else {
+			return HIT
+		}
+	default:
+		panic("Unknown symbol logic error")
+	}
+	panic("Unknown symbol logic error")
+}
 
 type PlayStrategy interface {
 	TakeAction(currentHand Hand, shownCard Card) GameAction
@@ -154,75 +298,61 @@ type DiscoveredStrategy struct {
 	dealerStrategy  PlayStrategy
 	bettingStrategy BettingStrategy
 	iterations      uint
-	hards           [][][]GameAction
-	splits          [][][]GameAction
-	softs           [][][]GameAction
+	hards           [][]strategyTableAction
+	splits          [][]strategyTableAction
+	softs           [][]strategyTableAction
+}
+
+func newStratAction(dim1 int, dim2 int) [][]strategyTableAction {
+	r := make([][]strategyTableAction, dim1)
+	for i:=0;i<dim1;i++ {
+		r[i] = make([]strategyTableAction, dim2)
+	}
+	return r
 }
 
 func NewDiscoveredStrategy(rules Rules, shoeFactory ShoeFactory, dealerStrategy PlayStrategy, iterations uint) *DiscoveredStrategy {
-	resets := make([][][][]GameAction, 3)
-	for i := 0; i < len(resets); i++ {
-		resets[i] = make([][][]GameAction, 21)
-		for scores := 0; scores < len(resets[i]); scores++ {
-			resets[i][scores] = make([][]GameAction, 11)
-			for k :=0;k<len(resets[i][scores]);k++ {
-				resets[i][scores][k] = []GameAction{}
-			}
-		}
-	}
-
 	return &DiscoveredStrategy{
 		rules: rules,
 		shoeFactory: shoeFactory,
 		dealerStrategy: dealerStrategy,
 		bettingStrategy: NewConsistentBettingStrategy(1),
 		iterations: iterations,
-		hards: resets[0],
-		splits: resets[1],
-		softs: resets[2],
+		// 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+		hards: newStratAction(17, 11),
+		// 2 3 4 5 6 7 8 9 10 A
+		splits: newStratAction(10, 11),
+		// 13 14 15 16 17 18 19 20 (A with any but another A or 10)
+		softs: newStratAction(8, 11),
 	}
 }
 
 func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
-	for dealerUpCardScore, _ := range this.hards[0] {
-		if dealerUpCardScore == 0 {
-			fmt.Fprintf(w, "%-15s", "")
-			continue
-		}
-		fmt.Fprintf(w, "%-15d", dealerUpCardScore)
+	fmt.Fprintf(w, "%-15s", "")
+	dealerUpCards := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 0}
+	for _, c := range dealerUpCards {
+		fmt.Fprintf(w, "%-15s", Values()[c])
 	}
-
 	fmt.Fprintf(w, "\n")
+
 	fmt.Fprintf(w, "Hard strategy table\n")
+
 	for playerHandValue, perScoreHards := range this.hards {
-		if playerHandValue < 5 {
-			// Lowest hard hand is 5 because we consider 4 (2/2) a split hand
-			continue
-		}
-		for dealerUpCardScore, perDealerCard := range perScoreHards {
-			if dealerUpCardScore == 0 {
-				fmt.Fprintf(w, "%-15d", playerHandValue)
-				continue
-			}
-			s := fmt.Sprintf("%s", perDealerCard)
+		fmt.Fprintf(w, "%-15d", playerHandValue + 4)
+		for _, dealerUpCardScore := range dealerUpCards {
+			s := fmt.Sprintf("%s", perScoreHards[Values()[dealerUpCardScore].Index()])
 			fmt.Fprintf(w, "%-15s", s)
 		}
 		fmt.Fprintf(w, "\n")
 	}
 
 	fmt.Fprintf(w, "\n")
+
 	fmt.Fprintf(w, "Soft strategy table\n")
-	for playerHandValue, perScoreHards := range this.softs {
-		if playerHandValue < 13 {
-			// Lowest soft hand is 13 because we consider 12 (A/A) a split hand)
-			continue
-		}
-		for dealerUpCardScore, perDealerCard := range perScoreHards {
-			if dealerUpCardScore == 0 {
-				fmt.Fprintf(w, "%-15d", playerHandValue)
-				continue
-			}
-			s := fmt.Sprintf("%s", perDealerCard)
+	for playerHandValue, perScoreSofts := range this.softs {
+		fmt.Fprintf(w, "%-15d", playerHandValue + 13)
+		for _, dealerUpCardScore := range dealerUpCards {
+			s := fmt.Sprintf("%s", perScoreSofts[Values()[dealerUpCardScore].Index()])
 			fmt.Fprintf(w, "%-15s", s)
 		}
 		fmt.Fprintf(w, "\n")
@@ -230,17 +360,13 @@ func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
 
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Splits strategy table\n")
-	for playerSplitValue, perScoreHards := range this.splits {
-		if playerSplitValue > 11 || playerSplitValue == 0 {
-			continue
-		}
-		for dealerUpCardScore, perDealerCard := range perScoreHards {
-			if dealerUpCardScore == 0 {
-				s := fmt.Sprintf("%d/%d", playerSplitValue,playerSplitValue)
-				fmt.Fprintf(w, "%-15s", s)
-				continue
-			}
-			s := fmt.Sprintf("%s", perDealerCard)
+	for i:=0;i<len(this.splits);i++ {
+//	for playerSplitValue, perScoreSplits := range this.splits {
+		perScoreSplits := this.splits[(i+1)%len(this.splits)]
+		s := fmt.Sprintf("%c/%c", Values()[(i+1)%len(this.splits)].Symbol(), Values()[(i+1)%len(this.splits)].Symbol())
+		fmt.Fprintf(w, "%-15s", s)
+		for _, dealerUpCardScore := range dealerUpCards {
+			s := fmt.Sprintf("%s", perScoreSplits[Values()[dealerUpCardScore].Index()])
 			fmt.Fprintf(w, "%-15s", s)
 		}
 		fmt.Fprintf(w, "\n")
@@ -248,79 +374,53 @@ func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
 }
 
 func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card, gameAction GameAction) {
+	if currentHand.Bust() {
+		panic("You can't set a strategy for a bust hand!!!!")
+	}
+	if len(currentHand.Cards()) < 2 {
+		panic("You can't set a strategy for a hand with less than two cards!!!")
+	}
 	if this.rules.CanSplit(currentHand) {
-		for _, v := range this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()] {
-			if v == gameAction {
-				// Already set
-				return
-			}
-		}
-		this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()] = append(this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()], gameAction)
+		this.splits[currentHand.FirstCard().Score() - 1][dealerUpCard.Score() - 1] = combineTableAction(this.splits[currentHand.FirstCard().Score() - 1][dealerUpCard.Score() - 1], gameAction)
 	} else if currentHand.IsSoft() {
-		for _, v := range this.softs[currentHand.Score()][dealerUpCard.Score()] {
-			if v == gameAction {
-				// Already set
-				return
-			}
-		}
-		this.softs[currentHand.Score()][dealerUpCard.Score()] = append(this.softs[currentHand.Score()][dealerUpCard.Score()], gameAction)
+		// Smallest soft hand is 13
+		this.softs[currentHand.Score() - 13][dealerUpCard.Score() - 1] = combineTableAction(this.softs[currentHand.Score() - 13][dealerUpCard.Score() - 1], gameAction)
 	} else {
-		for _, v := range this.hards[currentHand.Score()][dealerUpCard.Score()] {
-			if v == gameAction {
-				// Already set
-				return
-			}
-		}
-		this.hards[currentHand.Score()][dealerUpCard.Score()] = append(this.hards[currentHand.Score()][dealerUpCard.Score()], gameAction)
+		// Smallest non split hard hand is 4 (Maybe you got 2/2 and split into 2/2 so many times you can't split again???)
+		this.hards[currentHand.Score() - 4][dealerUpCard.Score() - 1] = combineTableAction(this.hards[currentHand.Score() - 4][dealerUpCard.Score() - 1], gameAction)
 	}
 }
 
-func (this *DiscoveredStrategy) Clone() *DiscoveredStrategy {
-	thisResets := [][][][]GameAction{this.hards, this.splits, this.softs}
-	resets := make([][][][]GameAction, 3)
-	for i := 0; i < len(resets); i++ {
-		resets[i] = make([][][]GameAction, 21)
-		for scores := 0; scores < len(resets[i]); scores++ {
-			resets[i][scores] = make([][]GameAction, 11)
-			for j := 0; j < len(resets[i][scores]); j++ {
-				resets[i][scores][j] = make([]GameAction, len(thisResets[i][scores][j]))
-				for k :=0;k<len(resets[i][scores][j]);k++ {
-					resets[i][scores][j][k] = thisResets[i][scores][j][k]
-				}
-			}
+func actionsClone(acts [][]strategyTableAction) [][]strategyTableAction {
+	r := make([][]strategyTableAction, len(acts))
+	for i:=0;i<len(acts);i++ {
+		r[i] = make([]strategyTableAction, len(acts[i]))
+		for j:=0;j<len(acts[i]);j++{
+			r[i][j] = acts[i][j]
 		}
 	}
+	return r
+}
 
+func (this *DiscoveredStrategy) Clone() *DiscoveredStrategy {
 	return &DiscoveredStrategy{
 		rules: this.rules,
 		shoeFactory: this.shoeFactory,
 		dealerStrategy: this.dealerStrategy,
 		bettingStrategy: this.bettingStrategy,
 		iterations: this.iterations,
-		hards: resets[0],
-		splits: resets[1],
-		softs: resets[2],
+		hards: actionsClone(this.hards),
+		splits: actionsClone(this.splits),
+		softs: actionsClone(this.softs),
 	}
 }
 
 
 
 func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) GameAction {
-	if currentHand.Score() >= 21 {
-		return STAND
-	}
-	var actions []GameAction
-	if this.rules.CanSplit(currentHand) {
-		actions = this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()]
-	} else if currentHand.IsSoft() {
-		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
-	} else {
-		actions = this.hards[currentHand.Score()][dealerUpCard.Score()]
-	}
-	for _, action := range actions {
-		if this.rules.AllowsAction(action, currentHand) {
-			return action
-		}
+	currentAction := this.NonRecursiveTakeAction(currentHand, dealerUpCard)
+	if currentAction != nil {
+		return currentAction
 	}
 	learnedAction, err := this.LearnAction(currentHand, dealerUpCard)
 	if err != nil {
@@ -332,24 +432,28 @@ func (this *DiscoveredStrategy) TakeAction(currentHand Hand, dealerUpCard Card) 
 	return learnedAction
 }
 
-func (this *DiscoveredStrategy) nonRecursiveTakeAction(currentHand Hand, dealerUpCard Card) GameAction {
-	if currentHand.Score() >= 21 {
+func (this *DiscoveredStrategy) NonRecursiveTakeAction(currentHand Hand, dealerUpCard Card) GameAction {
+	if currentHand.Bust() {
+		panic("There is no action on a bust hand!")
+	}
+	if currentHand.Score() == 21 {
+		// no silly moves on 21 even considered
 		return STAND
 	}
-	var actions []GameAction
+	var tableAction strategyTableAction
 	if this.rules.CanSplit(currentHand) {
-		actions = this.splits[currentHand.FirstCard().Score()][dealerUpCard.Score()]
+		tableAction = this.splits[currentHand.FirstCard().Score() - 1][dealerUpCard.Score() - 1]
 	} else if currentHand.IsSoft() {
-		actions = this.softs[currentHand.Score()][dealerUpCard.Score()]
+		tableAction = this.softs[currentHand.Score() - 13][dealerUpCard.Score() - 1]
 	} else {
-		actions = this.hards[currentHand.Score()][dealerUpCard.Score()]
+//		fmt.Printf("%d %d %d %d\n", currentHand.Score() - 4, dealerUpCard.Score() - 1, len(this.hards), len(this.hards[currentHand.Score() - 4]))
+		tableAction = this.hards[currentHand.Score() - 4][dealerUpCard.Score() - 1]
 	}
-	for _, action := range actions {
-		if this.rules.AllowsAction(action, currentHand) {
-			return action
-		}
+	if tableAction == nil {
+		return nil
+	} else {
+		return tableAction.GameAction(this.rules, currentHand)
 	}
-	return nil
 }
 
 func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card) (GameAction, error) {
@@ -365,7 +469,7 @@ func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card)
 	var discoveredHitTable *DiscoveredStrategy
 	var discoveredStandTable *DiscoveredStrategy
 
-	currentAction := this.nonRecursiveTakeAction(currentHand, dealerUpCard)
+	currentAction := this.NonRecursiveTakeAction(currentHand, dealerUpCard)
 	if currentAction != nil {
 		return currentAction, nil
 	}
@@ -439,6 +543,8 @@ func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card)
 		this.splits = discoveredSplitTable.splits
 	}
 	//log.Printf("Best for %s vs %s is %s\n", currentHand, dealerUpCard, bestStrategy)
-	this.SetStrategy(currentHand, dealerUpCard, bestStrategy)
+	if this.NonRecursiveTakeAction(currentHand, dealerUpCard) != bestStrategy {
+		this.SetStrategy(currentHand, dealerUpCard, bestStrategy)
+	}
 	return bestStrategy, nil
 }
