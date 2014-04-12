@@ -47,7 +47,7 @@ func main() {
 		// hasThirdCard takes care of situations where you can no longer double/surrender
 		for isSplit := 0 ;isSplit < 2; isSplit++ {
 			for isSoft := 0; isSoft < 2; isSoft ++ {
-				for totalValue := uint(21) ; totalValue > uint(0); totalValue-- {
+				for totalValue := uint(0) ; totalValue < uint(22); totalValue++ {
 					for _, cardOne := range blackjack.Values() {
 						for _, cardTwo := range blackjack.Values() {
 							for _, dealerUpCard := range blackjack.Values() {

@@ -10,6 +10,7 @@ import (
 	//	"log"
 	"fmt"
 	"io"
+	"gaming"
 )
 
 type GameAction interface {
@@ -305,7 +306,7 @@ type DiscoveredStrategy struct {
 
 func newStratAction(dim1 int, dim2 int) [][]strategyTableAction {
 	r := make([][]strategyTableAction, dim1)
-	for i:=0;i<dim1;i++ {
+	for i := 0; i < dim1; i++ {
 		r[i] = make([]strategyTableAction, dim2)
 	}
 	return r
@@ -360,10 +361,10 @@ func (this *DiscoveredStrategy) PrintStrategy(w io.Writer) {
 
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "Splits strategy table\n")
-	for i:=0;i<len(this.splits);i++ {
-//	for playerSplitValue, perScoreSplits := range this.splits {
-		perScoreSplits := this.splits[(i+1)%len(this.splits)]
-		s := fmt.Sprintf("%c/%c", Values()[(i+1)%len(this.splits)].Symbol(), Values()[(i+1)%len(this.splits)].Symbol())
+	for i := 0; i < len(this.splits); i++ {
+		//	for playerSplitValue, perScoreSplits := range this.splits {
+		perScoreSplits := this.splits[(i + 1)%len(this.splits)]
+		s := fmt.Sprintf("%c/%c", Values()[(i + 1)%len(this.splits)].Symbol(), Values()[(i + 1)%len(this.splits)].Symbol())
 		fmt.Fprintf(w, "%-15s", s)
 		for _, dealerUpCardScore := range dealerUpCards {
 			s := fmt.Sprintf("%s", perScoreSplits[Values()[dealerUpCardScore].Index()])
@@ -393,9 +394,9 @@ func (this *DiscoveredStrategy) SetStrategy(currentHand Hand, dealerUpCard Card,
 
 func actionsClone(acts [][]strategyTableAction) [][]strategyTableAction {
 	r := make([][]strategyTableAction, len(acts))
-	for i:=0;i<len(acts);i++ {
+	for i := 0; i < len(acts); i++ {
 		r[i] = make([]strategyTableAction, len(acts[i]))
-		for j:=0;j<len(acts[i]);j++{
+		for j := 0; j < len(acts[i]); j++ {
 			r[i][j] = acts[i][j]
 		}
 	}
@@ -446,7 +447,7 @@ func (this *DiscoveredStrategy) NonRecursiveTakeAction(currentHand Hand, dealerU
 	} else if currentHand.IsSoft() {
 		tableAction = this.softs[currentHand.Score() - 13][dealerUpCard.Score() - 1]
 	} else {
-//		fmt.Printf("%d %d %d %d\n", currentHand.Score() - 4, dealerUpCard.Score() - 1, len(this.hards), len(this.hards[currentHand.Score() - 4]))
+		//		fmt.Printf("%d %d %d %d\n", currentHand.Score() - 4, dealerUpCard.Score() - 1, len(this.hards), len(this.hards[currentHand.Score() - 4]))
 		tableAction = this.hards[currentHand.Score() - 4][dealerUpCard.Score() - 1]
 	}
 	if tableAction == nil {
@@ -456,7 +457,21 @@ func (this *DiscoveredStrategy) NonRecursiveTakeAction(currentHand Hand, dealerU
 	}
 }
 
+func scoresPerValue() []Card {
+	return []Card{nil, NewCard(gaming.Spade, Ace), NewCard(gaming.Spade, Two),
+		NewCard(gaming.Spade, Three),
+		NewCard(gaming.Spade, Four),
+		NewCard(gaming.Spade, Five),
+		NewCard(gaming.Spade, Six),
+		NewCard(gaming.Spade, Seven),
+		NewCard(gaming.Spade, Eight),
+		NewCard(gaming.Spade, Nine),
+		NewCard(gaming.Spade, Ten),
+	}
+}
+
 func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card) (GameAction, error) {
+//	fmt.Printf("Learning %s vs %s\n", currentHand.Cards(), dealerUpCard)
 	var err error
 	splitWinning := float64(math.MinInt64)
 	doubleWinning := float64(math.MinInt64)
@@ -466,12 +481,40 @@ func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card)
 	var discoveredSplitTable *DiscoveredStrategy
 	var discoveredDoubleTable *DiscoveredStrategy
 	var discoveredSurrenderTable *DiscoveredStrategy
-	var discoveredHitTable *DiscoveredStrategy
-	var discoveredStandTable *DiscoveredStrategy
-
 	currentAction := this.NonRecursiveTakeAction(currentHand, dealerUpCard)
 	if currentAction != nil {
 		return currentAction, nil
+	}
+	if (!this.rules.CanDouble(currentHand) || !this.rules.CanSurrender(currentHand)) && len(currentHand.Cards()) > 2 {
+		// If we can double the two card hand, then learn that first.
+		var testHand Hand
+		if currentHand.IsSoft() {
+			testHand = NewHand(NewCard(gaming.Spade, Ace), scoresPerValue()[currentHand.Score() - 11])
+		} else {
+			if currentHand.Score() > 11 {
+				testHand = NewHand(NewCard(gaming.Spade, Ten), scoresPerValue()[currentHand.Score() - 10])
+			} else {
+				testHand = NewHand(NewCard(gaming.Spade, Two), scoresPerValue()[currentHand.Score() - 2])
+			}
+		}
+		if currentHand.Score() != testHand.Score() || currentHand.IsSoft() != testHand.IsSoft() {
+			panic("Scores do not match!")
+		}
+		if this.rules.CanSurrender(testHand) || this.rules.CanDouble(testHand) {
+//			fmt.Printf("Here %s %s\n", currentHand.Cards(), testHand.Cards())
+			testAction := this.TakeAction(testHand, dealerUpCard)
+//			fmt.Printf("Done\n")
+			discoveredMyselfAction := this.NonRecursiveTakeAction(currentHand, dealerUpCard)
+			if testAction == HIT || testAction == STAND {
+				if discoveredMyselfAction != testAction {
+					this.SetStrategy(currentHand, dealerUpCard, testAction)
+				}
+				return testAction, nil
+			}
+			if discoveredMyselfAction != nil {
+				return discoveredMyselfAction, nil
+			}
+		}
 	}
 	handDealer := NewForceDealerPlayerHands(currentHand, dealerUpCard.BlackjackValue())
 
@@ -499,13 +542,13 @@ func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card)
 			return nil, err
 		}
 	}
-	discoveredHitTable = this.Clone()
+	discoveredHitTable := this.Clone()
 	discoveredHitTable.SetStrategy(currentHand, dealerUpCard, HIT)
 	hitWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredHitTable, this.bettingStrategy, this.iterations, this.rules)
 	if err != nil {
 		return nil, err
 	}
-	discoveredStandTable = this.Clone()
+	discoveredStandTable := this.Clone()
 	discoveredStandTable.SetStrategy(currentHand, dealerUpCard, STAND)
 	standWinning, err = SimulateSingleHand(this.shoeFactory, handDealer, this.dealerStrategy, discoveredStandTable, this.bettingStrategy, this.iterations, this.rules)
 	if err != nil {
@@ -514,34 +557,31 @@ func (this *DiscoveredStrategy) LearnAction(currentHand Hand, dealerUpCard Card)
 
 	bestStrategy := STAND
 	bestScore := standWinning
+	bestTable := discoveredStandTable
 	if bestScore < hitWinning {
 		bestStrategy = HIT
 		bestScore = hitWinning
-		this.hards = discoveredHitTable.hards
-		this.softs = discoveredHitTable.softs
-		this.splits = discoveredHitTable.splits
+		bestTable = discoveredHitTable
 	}
 	if bestScore < surrenderWinning {
 		bestStrategy = SURRENDER
 		bestScore = surrenderWinning
-		this.hards = discoveredSurrenderTable.hards
-		this.softs = discoveredSurrenderTable.softs
-		this.splits = discoveredSurrenderTable.splits
+		bestTable = discoveredSurrenderTable
 	}
 	if bestScore < doubleWinning {
 		bestStrategy = DOUBLE
 		bestScore = doubleWinning
-		this.hards = discoveredDoubleTable.hards
-		this.softs = discoveredDoubleTable.softs
-		this.splits = discoveredDoubleTable.splits
+		bestTable = discoveredDoubleTable
 	}
 	if bestScore < splitWinning {
 		bestStrategy = SPLIT
 		bestScore = splitWinning
-		this.hards = discoveredSplitTable.hards
-		this.softs = discoveredSplitTable.softs
-		this.splits = discoveredSplitTable.splits
+		bestTable = discoveredSplitTable
 	}
+	this.hards = bestTable.hards
+	this.softs = bestTable.softs
+	this.splits = bestTable.splits
+//	fmt.Printf("     I proved %s vs %s is to %s\n", currentHand, dealerUpCard, bestStrategy)
 	//log.Printf("Best for %s vs %s is %s\n", currentHand, dealerUpCard, bestStrategy)
 	if this.NonRecursiveTakeAction(currentHand, dealerUpCard) != bestStrategy {
 		this.SetStrategy(currentHand, dealerUpCard, bestStrategy)
