@@ -7,7 +7,7 @@ package blackjack
 
 import (
 	"errors"
-	"gaming/bankroll"
+	"gaming"
 	"fmt"
 )
 
@@ -104,5 +104,5 @@ func SimulateSingleHand(shoeFactory ShoeFactory, handDealer HandDealer, dealerSt
 	if player.Bankroll().CurrentBankroll()+table.Dealer().Bankroll().CurrentBankroll() != 0 {
 		panic("Logic error: Bankrolls should even out")
 	}
-	return float64(bankroll.Money(player.Bankroll().CurrentBankroll()) / bankroll.Money(number_of_iterations)), nil
+	return float64(gaming.Money(player.Bankroll().CurrentBankroll()) / gaming.Money(number_of_iterations)), nil
 }

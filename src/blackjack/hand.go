@@ -1,7 +1,7 @@
 package blackjack
 
 import (
-	"gaming/bankroll"
+	"gaming"
 	"strconv"
 )
 
@@ -15,14 +15,14 @@ type Hand interface {
 	IsSplitHand() bool
 	FirstCard() Card
 	Cards() []Card
-	MoneyInThisHand() bankroll.MoneyHolder
+	MoneyInThisHand() gaming.MoneyHolder
 	SplitNumber() uint
 	LastAction() GameAction
 	SetLastAction(GameAction)
-	SplitHand(bankrollToDrawFrom bankroll.MoneyHolder) (Hand, Hand, error)
+	SplitHand(bankrollToDrawFrom gaming.MoneyHolder) (Hand, Hand, error)
 
 	Bust() bool
-	Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand
+	Clone(bankrollToDrawFrom gaming.MoneyHolder) Hand
 }
 
 type HandHolder interface {
@@ -50,7 +50,7 @@ type handImpl struct {
 	aceCount    uint
 	score       uint
 	splitNumber uint
-	money       bankroll.MoneyHolder
+	money       gaming.MoneyHolder
 	lastAction  GameAction
 }
 
@@ -62,7 +62,7 @@ func (this *handImpl) IsSplitHand() bool {
 	return this.splitNumber > 0
 }
 
-func (this *handImpl) MoneyInThisHand() bankroll.MoneyHolder {
+func (this *handImpl) MoneyInThisHand() gaming.MoneyHolder {
 	return this.money
 }
 
@@ -74,7 +74,7 @@ func (this *handImpl) LastAction() GameAction {
 	return this.lastAction
 }
 
-func (this *handImpl) SplitHand(bankrollToDrawFrom bankroll.MoneyHolder) (Hand, Hand, error) {
+func (this *handImpl) SplitHand(bankrollToDrawFrom gaming.MoneyHolder) (Hand, Hand, error) {
 	h1 := NewSplitHand(this.SplitNumber()+1, this.cards[0])
 	bankrollToDrawFrom.TransferMoneyTo(h1.MoneyInThisHand(), this.MoneyInThisHand().CurrentBankroll())
 	h2 := NewSplitHand(this.SplitNumber()+1, this.cards[1])
@@ -121,8 +121,8 @@ func (this *handImpl) Size() uint {
 	return uint(len(this.cards))
 }
 
-func (this *handImpl) Clone(bankrollToDrawFrom bankroll.MoneyHolder) Hand {
-	newBankroll := bankroll.NewMoneyHolder()
+func (this *handImpl) Clone(bankrollToDrawFrom gaming.MoneyHolder) Hand {
+	newBankroll := gaming.NewMoneyHolder()
 	bankrollToDrawFrom.TransferMoneyTo(newBankroll, this.MoneyInThisHand().CurrentBankroll())
 	return &handImpl{
 		cards:       this.cards,
@@ -164,7 +164,7 @@ func NewHand(cards ...Card) Hand {
 
 func NewSplitHand(splitNumber uint, cards ...Card) Hand {
 	h := &handImpl{
-		money: bankroll.NewMoneyHolder(),
+		money: gaming.NewMoneyHolder(),
 		splitNumber: splitNumber,
 	}
 	for _, c := range cards {

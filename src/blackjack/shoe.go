@@ -28,6 +28,27 @@ func ShoePenetration(s Shoe) float64 {
 	return 1 - float64(s.CardsLeft())/float64(s.StartingCardCount())
 }
 
+func (s* Shoe) ShoePenetration() float64 {
+	return 1 - float64(s.CardsLeft())/float64(s.StartingCardCount())
+}
+
+func Decks(num_decks uint) Shoe {
+	cards := []Card{}
+	for i := uint(0); i < uint(num_decks); i++ {
+		for _, suit := range gaming.Suits() {
+			for _, value := range Values() {
+				cards = append(cards, NewCard(suit, value))
+			}
+		}
+	}
+
+	return NewShoe(cards...)
+}
+
+type infiniteShoe struct {
+	r *rand.Rand
+}
+
 type setShoeImpl struct {
 	cards             []Card
 	startingCardCount uint
@@ -79,22 +100,7 @@ func NewShoe(cards ...Card) Shoe {
 	return &setShoeImpl{cards, uint(len(cards))}
 }
 
-func Decks(num_decks uint) Shoe {
-	cards := []Card{}
-	for i := uint(0); i < uint(num_decks); i++ {
-		for _, suit := range gaming.Suits() {
-			for _, value := range Values() {
-				cards = append(cards, NewCard(suit, value))
-			}
-		}
-	}
 
-	return NewShoe(cards...)
-}
-
-type infiniteShoe struct {
-	r *rand.Rand
-}
 
 func (this *infiniteShoe) Pop() (Card, error) {
 	return NewRandomCard(this.r), nil

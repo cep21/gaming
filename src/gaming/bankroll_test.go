@@ -3,7 +3,7 @@
  * Time: 10:57 AM
  * @author jack
  */
-package bankroll
+package gaming
 
 import "testing"
 

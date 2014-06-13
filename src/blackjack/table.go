@@ -1,7 +1,7 @@
 package blackjack
 
 import (
-	"gaming/bankroll"
+	"gaming"
 	"fmt"
 )
 
@@ -89,7 +89,7 @@ func (table *tableImpl) PlayRound() error {
 					playerHand.MoneyInThisHand().TransferMoneyTo(activePlayer.Bankroll(), playerHand.MoneyInThisHand().CurrentBankroll())
 				} else {
 					// Player wins: pay bonus
-					table.dealer.Bankroll().TransferMoneyTo(activePlayer.Bankroll(), playerHand.MoneyInThisHand().CurrentBankroll()*bankroll.Money(table.rules.BlackjackPayout()))
+					table.dealer.Bankroll().TransferMoneyTo(activePlayer.Bankroll(), playerHand.MoneyInThisHand().CurrentBankroll()*gaming.Money(table.rules.BlackjackPayout()))
 					// Give me my money back!
 					playerHand.MoneyInThisHand().TransferMoneyTo(activePlayer.Bankroll(), playerHand.MoneyInThisHand().CurrentBankroll())
 				}

@@ -182,7 +182,7 @@ func (this *strategyTableActionImpl) GameAction(rules Rules, hand Hand) GameActi
 	default:
 		panic("Unknown symbol logic error")
 	}
-	panic("Unknown symbol logic error")
+//	panic("Unknown symbol logic error")
 }
 
 type PlayStrategy interface {

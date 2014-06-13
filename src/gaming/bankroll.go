@@ -3,7 +3,7 @@
  * Time: 10:55 AM
  * @author jack
  */
-package bankroll
+package gaming
 
 // A currency that you can bet and win
 type Money float64

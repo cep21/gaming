@@ -5,45 +5,49 @@
  */
 package blackjack
 
-import "gaming/bankroll"
+import "gaming"
 
 // A strategy to pick how much money to bet
 type BettingStrategy interface {
-	GetMoneyToBet() bankroll.Money
+	GetMoneyToBet() gaming.Money
 }
 
 type Better interface {
-	Bankroll() bankroll.MoneyHolder
+	Bankroll() gaming.MoneyHolder
 	BettingStrategy() BettingStrategy
 }
 
-type betterImpl struct {
-	bankroll        bankroll.MoneyHolder
-	bettingStrategy BettingStrategy
-}
-
-func (better *betterImpl) Bankroll() bankroll.MoneyHolder {
-	return better.bankroll
-}
-func (better *betterImpl) BettingStrategy() BettingStrategy {
-	return better.bettingStrategy
-}
-
-func NewBetter(bankroll bankroll.MoneyHolder, bettingStrategy BettingStrategy) Better {
+func NewBetter(bankroll gaming.MoneyHolder, bettingStrategy BettingStrategy) Better {
 	return &betterImpl{
 		bankroll:        bankroll,
 		bettingStrategy: bettingStrategy,
 	}
 }
 
-type consistentBettingStrategy struct {
-	money bankroll.Money
-}
-
-func NewConsistentBettingStrategy(money bankroll.Money) BettingStrategy {
+func NewConsistentBettingStrategy(money gaming.Money) BettingStrategy {
 	return &consistentBettingStrategy{money: money}
 }
 
-func (this *consistentBettingStrategy) GetMoneyToBet() bankroll.Money {
+func (this *consistentBettingStrategy) GetMoneyToBet() gaming.Money {
 	return this.money
 }
+
+
+/// ---- Private implementations
+
+type consistentBettingStrategy struct {
+	money gaming.Money
+}
+
+type betterImpl struct {
+	bankroll        gaming.MoneyHolder
+	bettingStrategy BettingStrategy
+}
+
+func (better *betterImpl) Bankroll() gaming.MoneyHolder {
+	return better.bankroll
+}
+func (better *betterImpl) BettingStrategy() BettingStrategy {
+	return better.bettingStrategy
+}
+

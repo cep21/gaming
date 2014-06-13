@@ -1,6 +1,6 @@
 package blackjack
 
-import "gaming/bankroll"
+import "gaming"
 
 type Dealer interface {
 	HandHolder
@@ -10,7 +10,7 @@ type Dealer interface {
 
 type dealerImpl struct {
 	HandHolder
-	bankroll     bankroll.MoneyHolder
+	bankroll     gaming.MoneyHolder
 	playStrategy PlayStrategy
 	handDealer   HandDealer
 }
@@ -18,13 +18,13 @@ type dealerImpl struct {
 func NewDealer(playStrategy PlayStrategy, handDealer HandDealer) Dealer {
 	return &dealerImpl{
 		HandHolder:   NewHandHolder(),
-		bankroll:     bankroll.NewMoneyHolder(),
+		bankroll:     gaming.NewMoneyHolder(),
 		playStrategy: playStrategy,
 		handDealer:   handDealer,
 	}
 }
 
-func (dealer *dealerImpl) Bankroll() bankroll.MoneyHolder {
+func (dealer *dealerImpl) Bankroll() gaming.MoneyHolder {
 	return dealer.bankroll
 }
 func (dealer *dealerImpl) PlayStrategy() PlayStrategy {

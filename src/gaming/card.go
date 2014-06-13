@@ -1,36 +1,14 @@
 package gaming
 
 import (
-	"fmt"
 	"math/rand"
+	"fmt"
 )
 
 type Suit interface {
 	Name() string
 	Symbol() rune
 	Index() uint
-}
-
-type suitImpl struct {
-	name   string
-	symbol rune
-	index  uint
-}
-
-func (this *suitImpl) Name() string {
-	return this.name
-}
-
-func (this *suitImpl) Symbol() rune {
-	return this.symbol
-}
-
-func (this *suitImpl) Index() uint {
-	return this.index
-}
-
-func (this *suitImpl) String() string {
-	return this.Name()
 }
 
 var Spade = &suitImpl{name: "spade", symbol: 's', index: 0}
@@ -51,28 +29,6 @@ type Value interface {
 	Name() string
 	Symbol() rune
 	Index() uint
-}
-
-type valueImpl struct {
-	name   string
-	symbol rune
-	index  uint
-}
-
-func (this *valueImpl) Name() string {
-	return this.name
-}
-
-func (this *valueImpl) Symbol() rune {
-	return this.symbol
-}
-
-func (this *valueImpl) Index() uint {
-	return this.index
-}
-
-func (this *valueImpl) String() string {
-	return fmt.Sprintf("%s", this.name)
 }
 
 var Ace = &valueImpl{name: "ace", symbol: 'A', index: 0}
@@ -101,6 +57,52 @@ func JokerValues() []Value {
 type Card interface {
 	Suit() Suit
 	Value() Value
+}
+
+
+//// --- Private implementations
+type suitImpl struct {
+	name   string
+	symbol rune
+	index  uint
+}
+
+func (this *suitImpl) Name() string {
+	return this.name
+}
+
+func (this *suitImpl) Symbol() rune {
+	return this.symbol
+}
+
+func (this *suitImpl) Index() uint {
+	return this.index
+}
+
+func (this *suitImpl) String() string {
+	return this.Name()
+}
+
+type valueImpl struct {
+	name   string
+	symbol rune
+	index  uint
+}
+
+func (this *valueImpl) Name() string {
+	return this.name
+}
+
+func (this *valueImpl) Symbol() rune {
+	return this.symbol
+}
+
+func (this *valueImpl) Index() uint {
+	return this.index
+}
+
+func (this *valueImpl) String() string {
+	return fmt.Sprintf("%s", this.name)
 }
 
 type cardImpl struct {
